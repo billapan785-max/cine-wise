@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Security Headers -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+  
+  <!-- Environment Polyfill -->
+  <script>
+    // Prevent ReferenceError: process is not defined if SDK is initialized before injection
+    window.process = window.process || { env: { API_KEY: "" } };
+  </script>
+
+  <!-- PWA & Mobile -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#dc2626">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Performance Preloads -->
+  <link rel="preconnect" href="https://api.themoviedb.org">
+  <link rel="preconnect" href="https://image.tmdb.org">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
+
+  <title>CineWise - AI-Powered Movie Discovery</title>
+  <meta name="description" content="Discover your next favorite movie with CineWise. Personalized AI recommendations powered by Gemini and the latest trending titles from TMDB.">
+  <meta name="keywords" content="Latest Movies 2026, Free Movie Database, Trending Cinema, Movie Ratings, AI Movie Recommendations, CineWise, TMDB Explorer, Best Movies To Watch">
+  
+  <link rel="canonical" href="https://cinewise.ai/" id="canonical-link">
+
+  <!-- Social Media: Open Graph -->
+  <meta property="og:title" content="CineWise - AI Movie Discovery">
+  <meta property="og:description" content="Personalized movie recommendations powered by artificial intelligence.">
+  <meta property="og:image" content="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1200&auto=format&fit=crop">
+  <meta property="og:url" content="https://cinewise.ai/">
+  <meta property="og:type" content="website">
+
+  <!-- Social Media: Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@CineWiseAI">
+  <meta name="twitter:title" content="CineWise - AI Movie Discovery">
+  <meta name="twitter:description" content="Experience cinematic discovery like never before. Get AI critiques for every title.">
+  <meta name="twitter:image" content="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1200&auto=format&fit=crop">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #09090b;
+      color: white;
+      -webkit-tap-highlight-color: transparent;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #18181b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3f3f46;
+      border-radius: 4px;
+    }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-zinc-950 text-white overflow-x-hidden">
+  <div id="root"></div>
+  <script>
+    // Global error catching to prevent "Uncaught" platform errors
+    window.addEventListener('unhandledrejection', (event) => {
+      console.warn('Unhandled promise rejection:', event.reason);
+      event.preventDefault();
+    });
+
+    // Catch script errors
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      console.error('Window Error:', msg, 'at', url, 'line', lineNo);
+      return false;
+    };
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        try {
+          navigator.serviceWorker.register('./sw.js', { scope: './' })
+            .then(reg => console.log('ServiceWorker registered:', reg.scope))
+            .catch(err => console.debug('ServiceWorker disabled for this session:', err.message));
+        } catch (e) {
+          console.debug('ServiceWorker registration not supported.');
+        }
+      });
+    }
+  </script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>

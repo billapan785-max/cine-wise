@@ -1,0 +1,23 @@
+
+{
+  "name": "CineWise - AI Movie Discovery",
+  "short_name": "CineWise",
+  "description": "Discover your next favorite movie with AI critiques and TMDB data.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#dc2626",
+  "icons": [
+    {
+      "src": "https://images.unsplash.com/photo-1485846234645-a62644ef7467?q=80&w=192&h=192&auto=format&fit=crop",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1485846234645-a62644ef7467?q=80&w=512&h=512&auto=format&fit=crop",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

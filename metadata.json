@@ -1,0 +1,5 @@
+{
+  "name": "CineWise - AI Movie Discovery",
+  "description": "A Netflix-inspired movie discovery platform featuring trending titles from TMDB and AI-powered recommendations using Gemini.",
+  "requestFramePermissions": []
+}
