@@ -192,7 +192,7 @@ const MovieCard: React.FC<{ movie: Movie; onClick: (movie: Movie) => void }> = (
       <div className="aspect-[2/3] w-full overflow-hidden rounded-md bg-zinc-900 shadow-xl border border-zinc-800 group-hover:border-zinc-700 transition-colors">
         <img 
           src={getImageUrl(movie.poster_path)} 
-          alt={${movie.title} Hollywood Movie Poster - CineWise}
+          alt={`${movie.title} Hollywood Movie Poster - CineWise`}
           className="h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-30"
           loading="lazy"
         />
