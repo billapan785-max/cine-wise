@@ -196,9 +196,13 @@ const MovieCard: React.FC<{ movie: Movie; onClick: (movie: Movie) => void }> = (
           className="h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-30"
           loading="lazy"
         />
+        <div className="p-3">
+  <h3 className="text-white font-semibold truncate">{movie.title}</h3>
+  <p className="text-gray-400 text-sm">{movie.release_date?.split('-')[0]}</p>
+</div>
       </div>
       <div className="absolute inset-0 flex flex-col justify-end p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
-        <h3 className="text-sm font-black leading-tight mb-1 drop-shadow-md uppercase tracking-tight">{movie.title}</h3>
+        <span className="text-sm font-black leading-tight mb-1 drop-shadow-md uppercase tracking-tight">{movie.title}</span>
         <div className="flex items-center gap-2 mb-2">
           <span className="flex items-center gap-1 text-[10px] text-yellow-500 font-black">
             <i className="fa-solid fa-star"></i>
