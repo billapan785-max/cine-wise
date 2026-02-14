@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Hamara Sitemap Link
+Sitemap: https://moviebox.shop/sitemap.xml
