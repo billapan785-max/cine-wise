@@ -192,7 +192,7 @@ const MovieCard: React.FC<{ movie: Movie; onClick: (movie: Movie) => void }> = (
       <div className="aspect-[2/3] w-full overflow-hidden rounded-md bg-zinc-900 shadow-xl border border-zinc-800 group-hover:border-zinc-700 transition-colors">
         <img 
           src={getImageUrl(movie.poster_path)} 
-          alt={movie.title}
+          alt={${movie.title} Hollywood Movie Poster - CineWise}
           className="h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-30"
           loading="lazy"
         />
@@ -450,6 +450,7 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen pb-20 overflow-x-hidden bg-zinc-950 text-white ${selectedMovie ? 'h-screen overflow-hidden' : ''}`}>
+      <h1 className="sr-only">CineWise - Watch Trending Hollywood Movies & Trailers Online</h1>
       <header className={`fixed top-0 w-full z-[50] transition-all duration-500 px-6 md:px-12 py-4 flex items-center justify-between ${isScrolled ? 'bg-zinc-950/95 shadow-2xl backdrop-blur-xl border-b border-zinc-900' : 'bg-transparent'}`}>
         <div className="flex items-center gap-12">
           <h1 className="text-2xl font-black text-red-600 tracking-tighter uppercase italic cursor-pointer select-none" onClick={resetView}>CineWise</h1>
