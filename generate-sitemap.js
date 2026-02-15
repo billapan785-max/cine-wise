@@ -1,56 +1,39 @@
 const fs = require('fs');
+const https = require('https');
 
-// --- CONFIGURATION ---
 const TMDB_API_KEY = 'cfedd233fe8494b29646beabc505d193';
-const DOMAIN = 'https://moviebox.shop'; // Aapki movie domain
+const DOMAIN = 'https://moviebox.shop';
 
-async function generate() {
-  console.log('🚀 Generating Sitemap...');
-  
-  try {
-    // Trending movies fetch kar rahe hain sitemap ke links ke liye
-    const response = await fetch(`https://api.themoviedb.org/3/trending/movie/day?api_key=${TMDB_API_KEY}`);
-    const data = await response.json();
-    const movies = data.results || [];
+const url = `https://api.themoviedb.org/3/trending/movie/day?api_key=${TMDB_API_KEY}`;
 
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>${DOMAIN}/</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <priority>1.0</priority>
-  </url>`;
+console.log('🚀 Fetching movies for sitemap...');
 
-    // Har movie ke liye dynamic URL generate ho raha hai
-    movies.forEach(movie => {
-      const slug = movie.title
-        .toLowerCase()
-        .replace(/ /g, '-')
-        .replace(/[^\w-]+/g, '');
-        
-      xml += `
-  <url>
-    <loc>${DOMAIN}/${slug}</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <priority>0.8</priority>
-  </url>`;
-    });
+https.get(url, (res) => {
+  let data = '';
+  res.on('data', (chunk) => { data += chunk; });
+  res.on('end', () => {
+    try {
+      const movies = JSON.parse(data).results || [];
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+      xml += `\n  <url><loc>${DOMAIN}/</loc><priority>1.0</priority></url>`;
 
-    xml += '\n</urlset>';
+      movies.forEach(movie => {
+        const slug = movie.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+        xml += `\n  <url><loc>${DOMAIN}/${slug}</loc><lastmod>${new Date().toISOString().split('T')[0]}</lastmod></url>`;
+      });
 
-    // Ise 'public' folder mein save kar rahe hain taake build ke baad ye root par show ho
-    // Agar public folder nahi hai toh seedha root par save karein
-    const dir = './public';
-    if (!fs.existsSync(dir)){
-        fs.mkdirSync(dir);
+      xml += '\n</urlset>';
+      
+      // Public folder check aur file writing
+      if (!fs.existsSync('./public')) fs.mkdirSync('./public');
+      fs.writeFileSync('./public/sitemap.xml', xml);
+      console.log('✅ Sitemap.xml created successfully!');
+    } catch (e) {
+      console.error('❌ Error:', e.message);
+      process.exit(1);
     }
-
-    fs.writeFileSync('./public/sitemap.xml', xml);
-    console.log('✅ Sitemap.xml generated successfully in /public folder!');
-    
-  } catch (error) {
-    console.error('❌ Sitemap generation failed:', error);
-  }
-}
-
-generate();
+  });
+}).on('error', (err) => {
+  console.error('❌ Fetch error:', err.message);
+  process.exit(1);
+});
