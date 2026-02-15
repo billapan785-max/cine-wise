@@ -57,47 +57,52 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
   if (!movie) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] bg-zinc-950 overflow-y-auto">
-      <button onClick={onClose} className="fixed top-6 left-6 z-[210] bg-black/60 hover:bg-red-600 w-12 h-12 rounded-full flex items-center justify-center text-white transition-all shadow-xl"><i className="fa-solid fa-xmark"></i></button>
+    <div className="fixed inset-0 z-[200] bg-zinc-950/95 flex items-center justify-center p-4 md:p-8 backdrop-blur-sm">
+      {/* Background Click to Close */}
+      <div className="absolute inset-0" onClick={onClose}></div>
       
-      <div className="relative w-full">
-        {showPlayer && trailerKey ? (
-          <div className="relative pt-[56.25%] bg-black">
-            <iframe 
-              className="absolute inset-0 w-full h-full"
-              src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1`}
-              title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-          </div>
-        ) : (
-          <div className="relative h-[55vh] md:h-[80vh] w-full">
-            <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover" alt={movie.title} />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent"></div>
-            <div className="absolute bottom-0 left-0 p-8 md:p-16 w-full">
-              <h2 className="text-4xl md:text-8xl font-black uppercase italic tracking-tighter leading-none mb-6 drop-shadow-2xl">{movie.title}</h2>
-              <div className="flex flex-wrap gap-4 items-center">
-                {trailerKey && (
-                  <button 
-                    onClick={() => setShowPlayer(true)}
-                    className="bg-red-600 text-white font-black px-10 py-4 rounded-xl hover:bg-white hover:text-black transition-all flex items-center gap-3 text-sm active:scale-95 shadow-lg"
-                  >
-                    <i className="fa-solid fa-play"></i> WATCH TRAILER
-                  </button>
-                )}
-                <span className="text-green-500 font-bold bg-zinc-900/80 px-3 py-1 rounded border border-zinc-800">{Math.round(movie.vote_average * 10)}% Match</span>
-                <span className="text-zinc-300 font-bold bg-zinc-900/80 px-3 py-1 rounded border border-zinc-800">{movie.release_date?.split('-')[0]}</span>
+      <div className="relative w-full max-w-6xl bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl border border-zinc-800 animate-in zoom-in-95 duration-300">
+        <button onClick={onClose} className="absolute top-4 right-4 z-[220] bg-black/60 hover:bg-red-600 w-10 h-10 rounded-full flex items-center justify-center text-white transition-all"><i className="fa-solid fa-xmark"></i></button>
+        
+        <div className="flex flex-col">
+          {/* Trailer Player Box */}
+          <div className="w-full bg-black aspect-video relative">
+            {showPlayer && trailerKey ? (
+              <iframe 
+                className="w-full h-full"
+                src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1`}
+                title="Trailer"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            ) : (
+              <div className="relative w-full h-full group">
+                <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover opacity-60" alt={movie.title} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {trailerKey && (
+                    <button 
+                      onClick={() => setShowPlayer(true)}
+                      className="bg-red-600 text-white w-20 h-20 rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-2xl active:scale-95"
+                    >
+                      <i className="fa-solid fa-play text-3xl ml-1"></i>
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
 
-      <div className="p-8 md:p-16 max-w-5xl">
-        <h3 className="text-zinc-500 text-xs font-black uppercase tracking-[0.3em] mb-4">Overview</h3>
-        <p className="text-xl md:text-3xl text-zinc-100 leading-relaxed font-light italic">"{movie.overview}"</p>
+          {/* Info Section */}
+          <div className="p-6 md:p-10 bg-zinc-900">
+            <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter mb-4">{movie.title}</h2>
+            <div className="flex gap-4 mb-6 text-sm font-bold">
+              <span className="text-green-500">{Math.round(movie.vote_average * 10)}% Match</span>
+              <span className="text-zinc-400">{movie.release_date?.split('-')[0]}</span>
+            </div>
+            <p className="text-lg text-zinc-300 leading-relaxed font-light italic">"{movie.overview}"</p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -145,15 +150,13 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen bg-zinc-950 text-white ${selectedMovie ? 'h-screen overflow-hidden' : ''}`}>
-      <h1 className="sr-only">CineWise - 2026 Trending Movies & In-App Trailers</h1>
-
       <header className={`fixed top-0 w-full z-[100] transition-all duration-500 px-6 md:px-12 py-4 flex items-center justify-between ${isScrolled ? 'bg-zinc-950 shadow-2xl border-b border-zinc-900' : 'bg-transparent'}`}>
         <div className="flex items-center gap-10">
           <h1 className="text-2xl font-black text-red-600 italic tracking-tighter cursor-pointer" onClick={() => {setViewMode('home'); setSearchQuery('');}}>CINEWISE</h1>
           <nav className="hidden md:flex gap-6 text-[10px] font-black uppercase tracking-widest">
-            <button onClick={() => setViewMode('home')} className={viewMode === 'home' ? 'text-white border-b-2 border-red-600 pb-1' : 'text-zinc-500 hover:text-white'}>Home</button>
-            <button onClick={() => setViewMode('news')} className={viewMode === 'news' ? 'text-white border-b-2 border-red-600 pb-1' : 'text-zinc-500 hover:text-white'}>2026 News</button>
-            <button onClick={() => setViewMode('blogs')} className={viewMode === 'blogs' ? 'text-white border-b-2 border-red-600 pb-1' : 'text-zinc-500 hover:text-white'}>Guides</button>
+            <button onClick={() => setViewMode('home')} className={viewMode === 'home' ? 'text-white border-b-2 border-red-600' : 'text-zinc-500 hover:text-white'}>Home</button>
+            <button onClick={() => setViewMode('news')} className={viewMode === 'news' ? 'text-white border-b-2 border-red-600' : 'text-zinc-500 hover:text-white'}>2026 News</button>
+            <button onClick={() => setViewMode('blogs')} className={viewMode === 'blogs' ? 'text-white border-b-2 border-red-600' : 'text-zinc-500 hover:text-white'}>Guides</button>
           </nav>
         </div>
         <form onSubmit={handleSearch} className="relative">
@@ -193,7 +196,7 @@ const App: React.FC = () => {
         <p className="text-sm font-bold">&copy; 2026 MovieBox - Professional Cinematic Network</p>
         <div className="flex justify-center gap-6 mt-4 text-xs font-black tracking-widest uppercase">
           <a href="/disclaimer" className="hover:text-red-600 transition-colors">Disclaimer</a>
-          <a href="/privacy" className="hover:text-red-600 transition-colors">Privacy</a>
+          <a href="/privacy" className="hover:text-red-600 transition-colors">Privacy Policy</a>
         </div>
       </footer>
     </div>
