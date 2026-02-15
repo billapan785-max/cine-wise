@@ -538,6 +538,13 @@ const App: React.FC = () => {
 
       <AIConcierge isOpen={isAIConciergeOpen} onClose={() => setIsAIConciergeOpen(false)} onSelectMovie={(m) => { setSelectedMovie(m); setIsAIConciergeOpen(false); }} />
       <Notification message={notification || ''} isVisible={!!notification} onClose={() => setNotification(null)} />
+      <footer className="w-full py-8 bg-zinc-950 text-zinc-500 text-center border-t border-zinc-800">
+    <p className="text-sm">&copy; 2026 MovieBox - All Trending Hollywood Updates</p>
+    <div className="flex justify-center gap-4 mt-2 text-xs">
+        <a href="/disclaimer" className="hover:text-red-500">Disclaimer</a>
+        <a href="/privacy" className="hover:text-red-500">Privacy Policy</a>
+    </div>
+</footer>
     </div>
   );
 };
