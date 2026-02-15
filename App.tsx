@@ -48,10 +48,6 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
           const results = data.results?.US?.flatrate || data.results?.IN?.flatrate || [];
           setProviders(results.slice(0, 3));
         });
-    } else {
-      setVideoKey(null);
-      setProviders([]);
-      setShowPlayer(false);
     }
   }, [movie]);
 
@@ -84,9 +80,9 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
               </div>
               {providers.length > 0 && (
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Stream On:</span>
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Available On:</span>
                   {providers.map(p => (
-                    <img key={p.provider_id} src={getImageUrl(p.logo_path, 'w92')} title={p.provider_name} className="w-8 h-8 rounded shadow border border-zinc-700" alt={p.provider_name} />
+                    <img key={p.provider_id} src={getImageUrl(p.logo_path, 'w92')} className="w-8 h-8 rounded shadow border border-zinc-700" alt={p.provider_name} />
                   ))}
                 </div>
               )}
@@ -107,6 +103,18 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // URL Cleanup and Management
+  const handleOpenMovie = (movie: Movie) => {
+    setSelectedMovie(movie);
+    const slug = movie.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+    window.history.pushState({ movieId: movie.id }, '', `/${slug}`); // Proper URL: domain.com/movie-name
+  };
+
+  const handleCloseMovie = () => {
+    setSelectedMovie(null);
+    window.history.pushState({}, '', '/'); // Back to home
+  };
 
   const fetchData = useCallback(async () => {
     const [tRes, pRes] = await Promise.all([
@@ -133,7 +141,7 @@ const App: React.FC = () => {
     <div className={`min-h-screen bg-zinc-950 text-white ${selectedMovie ? 'h-screen overflow-hidden' : ''}`}>
       <header className={`fixed top-0 w-full z-[100] transition-all duration-500 px-6 md:px-12 py-4 flex items-center justify-between ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/95 border-b border-zinc-900 backdrop-blur-xl' : 'bg-transparent'}`}>
         <div className="flex items-center gap-10">
-          <h1 className="text-2xl font-black text-red-600 italic tracking-tighter cursor-pointer" onClick={() => {setViewMode('home'); setSearchQuery('');}}>CINEWISE</h1>
+          <h1 className="text-2xl font-black text-red-600 italic tracking-tighter cursor-pointer" onClick={() => {setViewMode('home'); setSearchQuery(''); window.history.pushState({}, '', '/');}}>CINEWISE</h1>
           <nav className="hidden md:flex gap-6 text-[10px] font-black uppercase tracking-widest">
             <button onClick={() => setViewMode('home')} className={viewMode === 'home' ? 'text-white border-b-2 border-red-600' : 'text-zinc-500 hover:text-white'}>Home</button>
             <button onClick={() => setViewMode('news')} className={viewMode === 'news' ? 'text-white border-b-2 border-red-600' : 'text-zinc-500 hover:text-white'}>2026 News</button>
@@ -148,19 +156,19 @@ const App: React.FC = () => {
       {viewMode === 'disclaimer' ? (
         <div className="pt-32 px-6 max-w-4xl mx-auto min-h-screen">
           <h1 className="text-4xl font-black italic mb-6">DISCLAIMER</h1>
-          <p className="text-zinc-400 italic">All data provided is for informational purposes. Streams are via official providers.</p>
+          <p className="text-zinc-400 italic">All streaming data is provided via official YouTube and TMDB APIs. We do not host illegal content.</p>
           <button onClick={() => setViewMode('home')} className="mt-8 text-red-600 font-bold">← BACK HOME</button>
         </div>
       ) : (
         <>
-          {/* Hero Banner Restore */}
+          {/* Banner Restored */}
           {!searchQuery && viewMode === 'home' && trending[0] && (
             <section className="relative h-[80vh] w-full flex items-center px-6 md:px-16 overflow-hidden">
               <img src={getImageUrl(trending[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover" alt="Banner" />
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent"></div>
-              <div className="relative max-w-3xl space-y-6 animate-in fade-in slide-in-from-left duration-700">
+              <div className="relative max-w-3xl space-y-6">
                 <h2 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter leading-none">{trending[0].title}</h2>
-                <button onClick={() => setSelectedMovie(trending[0])} className="bg-white text-black font-black px-10 py-4 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-2xl">VIEW DETAILS</button>
+                <button onClick={() => handleOpenMovie(trending[0])} className="bg-white text-black font-black px-10 py-4 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-2xl">VIEW DETAILS</button>
               </div>
             </section>
           )}
@@ -172,7 +180,7 @@ const App: React.FC = () => {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
               {displayedMovies.map(m => (
-                <div key={m.id} onClick={() => setSelectedMovie(m)} className="relative group cursor-pointer transition-all hover:scale-105">
+                <div key={m.id} onClick={() => handleOpenMovie(m)} className="relative group cursor-pointer transition-all hover:scale-105">
                   <div className="aspect-[2/3] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-lg">
                     <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:opacity-20 transition-opacity" alt={m.title} />
                     <div className="absolute inset-0 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black">
@@ -186,15 +194,15 @@ const App: React.FC = () => {
         </>
       )}
 
-      <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
+      <MovieDetailModal movie={selectedMovie} onClose={handleCloseMovie} />
 
-      {/* Footer Restore */}
+      {/* Footer Restored */}
       <footer className="py-12 bg-zinc-950 text-center border-t border-zinc-900">
         <div className="flex justify-center gap-8 text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4">
           <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600">Disclaimer</button>
           <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600">Privacy Policy</button>
         </div>
-        <p className="text-xs text-zinc-700 font-bold">&copy; 2026 CINEWISE - PRO STREAMING NETWORK</p>
+        <p className="text-xs text-zinc-700 font-bold">&copy; 2026 CINEWISE - OFFICIAL NETWORK</p>
       </footer>
     </div>
   );
