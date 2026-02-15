@@ -11,6 +11,7 @@ export interface Movie {
   vote_average: number;
 }
 
+// --- CONFIGURATION ---
 const TMDB_API_KEY = 'cfedd233fe8494b29646beabc505d193';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
@@ -20,7 +21,7 @@ const getImageUrl = (path: string, size: 'w500' | 'original' = 'w500') => {
   return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
 };
 
-// --- MODAL COMPONENT (FIXED ALIGNMENT) ---
+// --- MODAL COMPONENT (CENTERED BOX) ---
 const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> = ({ movie, onClose }) => {
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [showPlayer, setShowPlayer] = useState(false);
@@ -42,54 +43,30 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
   if (!movie) return null;
 
   return (
-    // Fixed: Added pt-20 and overflow-y-auto to handle top hiding issue
-    <div className="fixed inset-0 z-[200] bg-zinc-950/90 backdrop-blur-md overflow-y-auto pt-20 pb-10 px-4">
+    <div className="fixed inset-0 z-[200] bg-zinc-950/90 backdrop-blur-md overflow-y-auto pt-24 pb-10 px-4">
       <div className="absolute inset-0 -z-10" onClick={onClose}></div>
-      
-      {/* Container Box */}
-      <div className="relative w-full max-w-5xl mx-auto bg-zinc-900 rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-zinc-800 animate-in fade-in zoom-in-95 duration-300">
-        
-        {/* Close Button */}
-        <button onClick={onClose} className="absolute top-5 right-5 z-[220] bg-black/50 hover:bg-red-600 w-10 h-10 rounded-full flex items-center justify-center text-white transition-all">
-          <i className="fa-solid fa-xmark"></i>
-        </button>
-        
+      <div className="relative w-full max-w-5xl mx-auto bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 animate-in zoom-in-95 duration-300">
+        <button onClick={onClose} className="absolute top-5 right-5 z-[220] bg-black/50 hover:bg-red-600 w-10 h-10 rounded-full flex items-center justify-center text-white transition-all"><i className="fa-solid fa-xmark"></i></button>
         <div className="flex flex-col">
-          {/* Trailer/Hero Section */}
           <div className="w-full bg-black aspect-video relative">
             {showPlayer && trailerKey ? (
-              <iframe 
-                className="w-full h-full"
-                src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&rel=0`}
-                title="Trailer"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
+              <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&rel=0`} title="Trailer" frameBorder="0" allowFullScreen></iframe>
             ) : (
               <div className="relative w-full h-full">
                 <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover opacity-60" alt={movie.title} />
                 <div className="absolute inset-0 flex items-center justify-center">
                   {trailerKey && (
-                    <button 
-                      onClick={() => setShowPlayer(true)}
-                      className="bg-red-600 text-white w-16 h-16 md:w-24 md:h-24 rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-2xl active:scale-95"
-                    >
-                      <i className="fa-solid fa-play text-2xl md:text-4xl ml-1"></i>
-                    </button>
+                    <button onClick={() => setShowPlayer(true)} className="bg-red-600 text-white w-20 h-20 rounded-full flex items-center justify-center hover:scale-110 transition-transform"><i className="fa-solid fa-play text-3xl ml-1"></i></button>
                   )}
                 </div>
               </div>
             )}
           </div>
-
-          {/* Info Section */}
-          <div className="p-8 md:p-12 bg-zinc-900">
+          <div className="p-8 md:p-12">
             <h2 className="text-3xl md:text-6xl font-black uppercase italic tracking-tighter mb-4 leading-none">{movie.title}</h2>
             <div className="flex gap-4 mb-6 text-sm font-bold items-center">
               <span className="text-green-500 bg-green-500/10 px-3 py-1 rounded-md">{Math.round(movie.vote_average * 10)}% Match</span>
               <span className="text-zinc-400">{movie.release_date?.split('-')[0]}</span>
-              <span className="border border-zinc-700 px-2 py-0.5 rounded text-[10px] text-zinc-500 uppercase">HD</span>
             </div>
             <p className="text-lg md:text-2xl text-zinc-300 leading-relaxed font-light italic">"{movie.overview}"</p>
           </div>
@@ -99,6 +76,7 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
   );
 };
 
+// --- MOVIE CARD ---
 const MovieCard: React.FC<{ movie: Movie; onClick: (m: Movie) => void }> = ({ movie, onClick }) => (
   <div className="relative group cursor-pointer transition-all duration-300 transform hover:scale-105" onClick={() => onClick(movie)}>
     <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-zinc-900 border border-zinc-800 shadow-xl">
@@ -111,6 +89,7 @@ const MovieCard: React.FC<{ movie: Movie; onClick: (m: Movie) => void }> = ({ mo
   </div>
 );
 
+// --- MAIN APP ---
 const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<'home' | 'news' | 'blogs'>('home');
   const [trending, setTrending] = useState<Movie[]>([]);
@@ -148,9 +127,16 @@ const App: React.FC = () => {
   return (
     <div className={`min-h-screen bg-zinc-950 text-white ${selectedMovie ? 'h-screen overflow-hidden' : ''}`}>
       <header className={`fixed top-0 w-full z-[100] transition-all duration-500 px-6 md:px-12 py-4 flex items-center justify-between ${isScrolled ? 'bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-900' : 'bg-transparent'}`}>
-        <h1 className="text-2xl font-black text-red-600 italic tracking-tighter cursor-pointer" onClick={() => {setViewMode('home'); setSearchQuery('');}}>CINEWISE</h1>
+        <div className="flex items-center gap-10">
+          <h1 className="text-2xl font-black text-red-600 italic tracking-tighter cursor-pointer" onClick={() => {setViewMode('home'); setSearchQuery('');}}>CINEWISE</h1>
+          <nav className="hidden md:flex gap-6 text-[10px] font-black uppercase tracking-widest">
+            <button onClick={() => setViewMode('home')} className={viewMode === 'home' ? 'text-white border-b-2 border-red-600' : 'text-zinc-500'}>Home</button>
+            <button onClick={() => setViewMode('news')} className={viewMode === 'news' ? 'text-white border-b-2 border-red-600' : 'text-zinc-500'}>2026 News</button>
+            <button onClick={() => setViewMode('blogs')} className={viewMode === 'blogs' ? 'text-white border-b-2 border-red-600' : 'text-zinc-500'}>Guides</button>
+          </nav>
+        </div>
         <form onSubmit={handleSearch} className="relative">
-          <input type="text" placeholder="SEARCH..." className="bg-zinc-900/80 border border-zinc-800 rounded-full py-2 px-10 text-[10px] w-40 md:w-80 outline-none focus:ring-2 focus:ring-red-600 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <input type="text" placeholder="SEARCH..." className="bg-zinc-900/80 border border-zinc-800 rounded-full py-2 px-10 text-[10px] w-40 md:w-80 outline-none focus:ring-2 focus:ring-red-600" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 text-xs"></i>
         </form>
       </header>
@@ -162,25 +148,32 @@ const App: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent"></div>
           <div className="relative h-full flex flex-col justify-center px-6 md:px-16 max-w-4xl space-y-6">
             <h2 className="text-5xl md:text-8xl font-black tracking-tighter leading-none italic uppercase">{trending[0].title}</h2>
-            <button onClick={() => setSelectedMovie(trending[0])} className="bg-white text-black font-black px-10 py-4 rounded-xl hover:bg-red-600 hover:text-white w-fit text-sm transition-all active:scale-95 shadow-xl">VIEW DETAILS</button>
+            <button onClick={() => setSelectedMovie(trending[0])} className="bg-white text-black font-black px-10 py-4 rounded-xl hover:bg-red-600 hover:text-white w-fit text-sm shadow-xl">VIEW DETAILS</button>
           </div>
         </section>
       )}
 
-      <main className="px-6 md:px-12 py-20">
+      <main className="px-6 md:px-12 py-20 min-h-screen">
         <h2 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 mb-8 flex items-center gap-4">
-          {searchQuery ? 'Search Results' : 'Trending Now'}
+          {searchQuery ? 'Search Results' : viewMode === 'home' ? 'Trending Global' : viewMode === 'news' ? 'Production News' : 'Cinematic Guides'}
           <span className="h-px flex-1 bg-zinc-800"></span>
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
-          {(searchQuery ? searchResults : trending).map(m => <MovieCard key={m.id} movie={m} onClick={setSelectedMovie} />)}
+          {(searchQuery ? searchResults : viewMode === 'home' ? trending : popular).map(m => (
+            <MovieCard key={m.id} movie={m} onClick={setSelectedMovie} />
+          ))}
         </div>
       </main>
 
       <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
 
+      {/* --- FOOTER RESTORED --- */}
       <footer className="w-full py-12 bg-zinc-950 text-zinc-500 text-center border-t border-zinc-900">
         <p className="text-sm font-bold">&copy; 2026 MovieBox - All Trending Hollywood Updates</p>
+        <div className="flex justify-center gap-6 mt-4 text-xs font-black tracking-widest uppercase">
+          <a href="/disclaimer" className="hover:text-red-600">Disclaimer</a>
+          <a href="/privacy" className="hover:text-red-600">Privacy Policy</a>
+        </div>
       </footer>
     </div>
   );
