@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-// --- TYPES & INTERFACES ---
+// --- TYPES ---
 export interface Movie {
   id: number;
   title: string;
@@ -26,47 +26,78 @@ const getImageUrl = (path: string, size: 'w500' | 'original' = 'w500') => {
 
 const MovieCard: React.FC<{ movie: Movie; onClick: (m: Movie) => void }> = ({ movie, onClick }) => (
   <div className="relative group cursor-pointer transition-all duration-300 transform hover:scale-105" onClick={() => onClick(movie)}>
-    <div className="aspect-[2/3] w-full overflow-hidden rounded-md bg-zinc-900 border border-zinc-800">
-      <img src={getImageUrl(movie.poster_path)} alt={movie.title} className="h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-30" loading="lazy" />
+    <div className="aspect-[2/3] w-full overflow-hidden rounded-md bg-zinc-900 border border-zinc-800 shadow-lg">
+      <img src={getImageUrl(movie.poster_path)} alt={movie.title} className="h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-20" loading="lazy" />
       <div className="absolute inset-0 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 bg-gradient-to-t from-black/90 via-transparent transition-opacity">
-        <span className="text-sm font-black uppercase italic">{movie.title}</span>
-        <span className="text-[10px] text-yellow-500"><i className="fa-solid fa-star"></i> {movie.vote_average.toFixed(1)}</span>
+        <span className="text-sm font-black uppercase italic leading-tight">{movie.title}</span>
+        <span className="text-[10px] text-yellow-500 mt-1"><i className="fa-solid fa-star"></i> {movie.vote_average.toFixed(1)}</span>
       </div>
     </div>
   </div>
 );
 
 const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> = ({ movie, onClose }) => {
+  const [trailerKey, setTrailerKey] = useState<string | null>(null);
+  const [showPlayer, setShowPlayer] = useState(false);
+
+  useEffect(() => {
+    if (movie) {
+      fetch(`${TMDB_BASE_URL}/movie/${movie.id}/videos?api_key=${TMDB_API_KEY}`)
+        .then(res => res.json())
+        .then(data => {
+          const trailer = data.results?.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
+          setTrailerKey(trailer ? trailer.key : null);
+        });
+    } else {
+      setTrailerKey(null);
+      setShowPlayer(false);
+    }
+  }, [movie]);
+
   if (!movie) return null;
 
-  // Trailer Search Function
-  const watchTrailer = () => {
-    const query = encodeURIComponent(`${movie.title} official trailer ${movie.release_date?.split('-')[0]}`);
-    window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
-  };
-
   return (
-    <div className="fixed inset-0 z-[200] bg-zinc-950 overflow-y-auto animate-in fade-in duration-300">
-      <button onClick={onClose} className="fixed top-6 left-6 z-[210] bg-black/60 hover:bg-red-600 w-12 h-12 rounded-full flex items-center justify-center text-white transition-all"><i className="fa-solid fa-arrow-left"></i></button>
-      <div className="relative h-[55vh] md:h-[75vh] w-full">
-        <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover" alt={movie.title} />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent"></div>
-        <div className="absolute bottom-0 left-0 p-8 md:p-16 w-full">
-          <h2 className="text-4xl md:text-8xl font-black uppercase italic tracking-tighter leading-none mb-6">{movie.title}</h2>
-          <div className="flex flex-wrap gap-4 items-center">
-             <button 
-               onClick={watchTrailer}
-               className="bg-white text-black font-black px-8 py-3 rounded-lg hover:bg-red-600 hover:text-white transition-all flex items-center gap-2 text-sm active:scale-95"
-             >
-               <i className="fa-solid fa-play"></i> WATCH TRAILER
-             </button>
-             <span className="text-green-500 font-bold">{Math.round(movie.vote_average * 10)}% Match</span>
-             <span className="text-zinc-400 font-bold">{movie.release_date?.split('-')[0]}</span>
+    <div className="fixed inset-0 z-[200] bg-zinc-950 overflow-y-auto">
+      <button onClick={onClose} className="fixed top-6 left-6 z-[210] bg-black/60 hover:bg-red-600 w-12 h-12 rounded-full flex items-center justify-center text-white transition-all shadow-xl"><i className="fa-solid fa-xmark"></i></button>
+      
+      <div className="relative w-full">
+        {showPlayer && trailerKey ? (
+          <div className="relative pt-[56.25%] bg-black">
+            <iframe 
+              className="absolute inset-0 w-full h-full"
+              src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
           </div>
-        </div>
+        ) : (
+          <div className="relative h-[55vh] md:h-[80vh] w-full">
+            <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover" alt={movie.title} />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 p-8 md:p-16 w-full">
+              <h2 className="text-4xl md:text-8xl font-black uppercase italic tracking-tighter leading-none mb-6 drop-shadow-2xl">{movie.title}</h2>
+              <div className="flex flex-wrap gap-4 items-center">
+                {trailerKey && (
+                  <button 
+                    onClick={() => setShowPlayer(true)}
+                    className="bg-red-600 text-white font-black px-10 py-4 rounded-xl hover:bg-white hover:text-black transition-all flex items-center gap-3 text-sm active:scale-95 shadow-lg"
+                  >
+                    <i className="fa-solid fa-play"></i> WATCH TRAILER
+                  </button>
+                )}
+                <span className="text-green-500 font-bold bg-zinc-900/80 px-3 py-1 rounded border border-zinc-800">{Math.round(movie.vote_average * 10)}% Match</span>
+                <span className="text-zinc-300 font-bold bg-zinc-900/80 px-3 py-1 rounded border border-zinc-800">{movie.release_date?.split('-')[0]}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
       <div className="p-8 md:p-16 max-w-5xl">
-        <p className="text-xl md:text-3xl text-zinc-200 leading-relaxed font-light italic">"{movie.overview}"</p>
+        <h3 className="text-zinc-500 text-xs font-black uppercase tracking-[0.3em] mb-4">Overview</h3>
+        <p className="text-xl md:text-3xl text-zinc-100 leading-relaxed font-light italic">"{movie.overview}"</p>
       </div>
     </div>
   );
@@ -114,19 +145,19 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen bg-zinc-950 text-white ${selectedMovie ? 'h-screen overflow-hidden' : ''}`}>
-      <h1 className="sr-only">CineWise - Watch Trending Hollywood Movies & Trailers Online</h1>
+      <h1 className="sr-only">CineWise - 2026 Trending Movies & In-App Trailers</h1>
 
-      <header className={`fixed top-0 w-full z-[100] transition-all duration-500 px-6 md:px-12 py-4 flex items-center justify-between ${isScrolled ? 'bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-900' : 'bg-transparent'}`}>
+      <header className={`fixed top-0 w-full z-[100] transition-all duration-500 px-6 md:px-12 py-4 flex items-center justify-between ${isScrolled ? 'bg-zinc-950 shadow-2xl border-b border-zinc-900' : 'bg-transparent'}`}>
         <div className="flex items-center gap-10">
           <h1 className="text-2xl font-black text-red-600 italic tracking-tighter cursor-pointer" onClick={() => {setViewMode('home'); setSearchQuery('');}}>CINEWISE</h1>
           <nav className="hidden md:flex gap-6 text-[10px] font-black uppercase tracking-widest">
-            <button onClick={() => setViewMode('home')} className={viewMode === 'home' ? 'text-white border-b border-red-600' : 'text-zinc-500 hover:text-white'}>Home</button>
-            <button onClick={() => setViewMode('news')} className={viewMode === 'news' ? 'text-white border-b border-red-600' : 'text-zinc-500 hover:text-white'}>2026 News</button>
-            <button onClick={() => setViewMode('blogs')} className={viewMode === 'blogs' ? 'text-white border-b border-red-600' : 'text-zinc-500 hover:text-white'}>Guides</button>
+            <button onClick={() => setViewMode('home')} className={viewMode === 'home' ? 'text-white border-b-2 border-red-600 pb-1' : 'text-zinc-500 hover:text-white'}>Home</button>
+            <button onClick={() => setViewMode('news')} className={viewMode === 'news' ? 'text-white border-b-2 border-red-600 pb-1' : 'text-zinc-500 hover:text-white'}>2026 News</button>
+            <button onClick={() => setViewMode('blogs')} className={viewMode === 'blogs' ? 'text-white border-b-2 border-red-600 pb-1' : 'text-zinc-500 hover:text-white'}>Guides</button>
           </nav>
         </div>
         <form onSubmit={handleSearch} className="relative">
-          <input type="text" placeholder="SEARCH MOVIES..." className="bg-zinc-900/50 border border-zinc-800 rounded-full py-2.5 px-10 text-[10px] w-40 md:w-80 outline-none focus:ring-2 focus:ring-red-600 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <input type="text" placeholder="SEARCH MOVIES..." className="bg-zinc-900/80 border border-zinc-800 rounded-full py-2.5 px-10 text-[10px] w-40 md:w-80 outline-none focus:ring-2 focus:ring-red-600 transition-all shadow-inner" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 text-xs"></i>
         </form>
       </header>
@@ -137,41 +168,32 @@ const App: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/40 to-transparent"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent"></div>
           <div className="relative h-full flex flex-col justify-center px-6 md:px-16 max-w-4xl space-y-6">
-            <span className="text-red-600 font-black tracking-[0.4em] text-[10px] uppercase">Spotlight Title</span>
+            <span className="text-red-600 font-black tracking-[0.4em] text-[10px] uppercase">Featured Today</span>
             <h2 className="text-5xl md:text-8xl font-black tracking-tighter leading-none italic uppercase">{trending[0].title}</h2>
-            <button onClick={() => setSelectedMovie(trending[0])} className="bg-white text-black font-black px-10 py-4 rounded-xl hover:bg-zinc-200 w-fit text-sm transition-transform active:scale-95">VIEW DETAILS</button>
+            <button onClick={() => setSelectedMovie(trending[0])} className="bg-white text-black font-black px-10 py-4 rounded-xl hover:bg-red-600 hover:text-white w-fit text-sm transition-all active:scale-95 shadow-xl">VIEW DETAILS</button>
           </div>
         </section>
       )}
 
-      <main className="px-6 md:px-12 py-20">
-        {searchQuery ? (
-          <section>
-            <h2 className="text-2xl font-black mb-8 uppercase tracking-tighter">Results for "{searchQuery}"</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
-              {searchResults.map(m => <MovieCard key={m.id} movie={m} onClick={setSelectedMovie} />)}
-            </div>
-          </section>
-        ) : (
-          <section>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 mb-8 flex items-center gap-4">
-              {viewMode === 'home' ? 'Trending Now' : viewMode === 'news' ? '2026 Production News' : 'Cinematic Guides'}
-              <span className="h-px flex-1 bg-zinc-900"></span>
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
-              {(viewMode === 'home' ? trending : popular).map(m => <MovieCard key={m.id} movie={m} onClick={setSelectedMovie} />)}
-            </div>
-          </section>
-        )}
+      <main className="px-6 md:px-12 py-20 min-h-screen">
+        <h2 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 mb-8 flex items-center gap-4">
+          {searchQuery ? `Results for "${searchQuery}"` : viewMode === 'home' ? 'Trending Movies' : 'Production News'}
+          <span className="h-px flex-1 bg-zinc-900"></span>
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
+          {(searchQuery ? searchResults : viewMode === 'home' ? trending : popular).map(m => (
+            <MovieCard key={m.id} movie={m} onClick={setSelectedMovie} />
+          ))}
+        </div>
       </main>
 
       <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
 
-      <footer className="w-full py-8 bg-zinc-950 text-zinc-500 text-center border-t border-zinc-800">
-        <p className="text-sm">&copy; 2026 MovieBox - All Trending Hollywood Updates</p>
-        <div className="flex justify-center gap-4 mt-2 text-xs">
-          <a href="/disclaimer" className="hover:text-red-500">Disclaimer</a>
-          <a href="/privacy" className="hover:text-red-500">Privacy Policy</a>
+      <footer className="w-full py-12 bg-zinc-950 text-zinc-500 text-center border-t border-zinc-900 mt-20">
+        <p className="text-sm font-bold">&copy; 2026 MovieBox - Professional Cinematic Network</p>
+        <div className="flex justify-center gap-6 mt-4 text-xs font-black tracking-widest uppercase">
+          <a href="/disclaimer" className="hover:text-red-600 transition-colors">Disclaimer</a>
+          <a href="/privacy" className="hover:text-red-600 transition-colors">Privacy</a>
         </div>
       </footer>
     </div>
