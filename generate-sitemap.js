@@ -1,5 +1,5 @@
-const fs = require('fs');
-const https = require('https');
+import fs from 'fs';
+import https from 'https';
 
 const TMDB_API_KEY = 'cfedd233fe8494b29646beabc505d193';
 const DOMAIN = 'https://moviebox.shop';
@@ -24,7 +24,6 @@ https.get(url, (res) => {
 
       xml += '\n</urlset>';
       
-      // Public folder check aur file writing
       if (!fs.existsSync('./public')) fs.mkdirSync('./public');
       fs.writeFileSync('./public/sitemap.xml', xml);
       console.log('✅ Sitemap.xml created successfully!');
