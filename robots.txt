@@ -1,7 +1,10 @@
 User-agent: *
 Allow: /
+
+# Private folders ko hide rakhne ke liye
 Disallow: /private/
 Disallow: /admin/
 Disallow: /config/
 
-Sitemap: https://cinewise.ai/sitemap.xml
+# Aapka naya automated sitemap link
+Sitemap: https://moviebox.shop/sitemap.xml
