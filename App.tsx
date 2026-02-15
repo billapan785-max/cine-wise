@@ -225,7 +225,7 @@ const App: React.FC = () => {
           <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600 transition-colors">Disclaimer</button>
           <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600 transition-colors">Privacy Policy</button>
         </div>
-        <p className="text-xs text-zinc-700 font-bold">&copy; 2026 CINEWISE - OFFICIAL STREAMING NETWORK</p>
+        <p className="text-xs text-zinc-700 font-bold">&copy; © 2026 CINEWISE - EXPLORE TRENDING MOVIES</p>
       </footer>
     </div>
   );
