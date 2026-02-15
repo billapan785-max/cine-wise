@@ -27,7 +27,7 @@ const getImageUrl = (path: string, size: 'w92' | 'w500' | 'original' = 'w500') =
   return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
 };
 
-// --- MODAL COMPONENT ---
+// --- MODAL COMPONENT (WITH PLAYER & PROVIDERS) ---
 const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> = ({ movie, onClose }) => {
   const [videoKey, setVideoKey] = useState<string | null>(null);
   const [providers, setProviders] = useState<WatchProvider[]>([]);
@@ -35,6 +35,7 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
 
   useEffect(() => {
     if (movie) {
+      // Fetch Trailer
       fetch(`${TMDB_BASE_URL}/movie/${movie.id}/videos?api_key=${TMDB_API_KEY}`)
         .then(res => res.json())
         .then(data => {
@@ -42,12 +43,17 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
           setVideoKey(trailer ? trailer.key : null);
         });
 
+      // Fetch Watch Providers
       fetch(`${TMDB_BASE_URL}/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`)
         .then(res => res.json())
         .then(data => {
           const results = data.results?.US?.flatrate || data.results?.IN?.flatrate || [];
           setProviders(results.slice(0, 3));
         });
+    } else {
+      setVideoKey(null);
+      setProviders([]);
+      setShowPlayer(false);
     }
   }, [movie]);
 
@@ -56,17 +62,21 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
   return (
     <div className="fixed inset-0 z-[200] bg-zinc-950/90 backdrop-blur-md overflow-y-auto pt-24 pb-10 px-4">
       <div className="absolute inset-0 -z-10" onClick={onClose}></div>
-      <div className="relative w-full max-w-5xl mx-auto bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl border border-zinc-800">
-        <button onClick={onClose} className="absolute top-5 right-5 z-[220] bg-black/50 hover:bg-red-600 w-10 h-10 rounded-full flex items-center justify-center text-white"><i className="fa-solid fa-xmark"></i></button>
+      <div className="relative w-full max-w-5xl mx-auto bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 animate-in zoom-in-95 duration-300">
+        <button onClick={onClose} className="absolute top-5 right-5 z-[220] bg-black/50 hover:bg-red-600 w-10 h-10 rounded-full flex items-center justify-center text-white transition-all shadow-xl">
+          <i className="fa-solid fa-xmark"></i>
+        </button>
         <div className="flex flex-col">
           <div className="w-full bg-black aspect-video relative">
             {showPlayer && videoKey ? (
               <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${videoKey}?autoplay=1`} title="Trailer" frameBorder="0" allowFullScreen></iframe>
             ) : (
-              <div className="relative w-full h-full">
+              <div className="relative w-full h-full group">
                 <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover opacity-60" alt={movie.title} />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <button onClick={() => setShowPlayer(true)} className="bg-red-600 text-white px-8 py-4 rounded-full flex items-center gap-3 hover:scale-110 transition-transform font-black shadow-2xl"><i className="fa-solid fa-play"></i> WATCH TRAILER</button>
+                  <button onClick={() => setShowPlayer(true)} className="bg-red-600 text-white px-8 py-4 rounded-full flex items-center gap-3 hover:scale-110 transition-transform font-black shadow-2xl">
+                    <i className="fa-solid fa-play"></i> WATCH TRAILER
+                  </button>
                 </div>
               </div>
             )}
@@ -82,7 +92,7 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
                 <div className="flex items-center gap-3">
                   <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Available On:</span>
                   {providers.map(p => (
-                    <img key={p.provider_id} src={getImageUrl(p.logo_path, 'w92')} className="w-8 h-8 rounded shadow border border-zinc-700" alt={p.provider_name} />
+                    <img key={p.provider_id} src={getImageUrl(p.logo_path, 'w92')} className="w-8 h-8 rounded shadow border border-zinc-700" title={p.provider_name} alt={p.provider_name} />
                   ))}
                 </div>
               )}
@@ -104,16 +114,29 @@ const App: React.FC = () => {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // URL Cleanup and Management
+  // SEO & URL Logic
   const handleOpenMovie = (movie: Movie) => {
     setSelectedMovie(movie);
     const slug = movie.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-    window.history.pushState({ movieId: movie.id }, '', `/${slug}`); // Proper URL: domain.com/movie-name
+    window.history.pushState({ movieId: movie.id }, '', `/${slug}`);
+    
+    // Google Search Title update
+    document.title = `${movie.title} (2026) - Watch Trailers & News on CineWise`;
+    
+    // Meta Description update
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', `Get details for ${movie.title}. Release date: ${movie.release_date}. Overview: ${movie.overview.slice(0, 150)}...`);
   };
 
   const handleCloseMovie = () => {
     setSelectedMovie(null);
-    window.history.pushState({}, '', '/'); // Back to home
+    window.history.pushState({}, '', '/');
+    document.title = 'CineWise - 2026 Trending Hollywood Updates';
   };
 
   const fetchData = useCallback(async () => {
@@ -141,27 +164,27 @@ const App: React.FC = () => {
     <div className={`min-h-screen bg-zinc-950 text-white ${selectedMovie ? 'h-screen overflow-hidden' : ''}`}>
       <header className={`fixed top-0 w-full z-[100] transition-all duration-500 px-6 md:px-12 py-4 flex items-center justify-between ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/95 border-b border-zinc-900 backdrop-blur-xl' : 'bg-transparent'}`}>
         <div className="flex items-center gap-10">
-          <h1 className="text-2xl font-black text-red-600 italic tracking-tighter cursor-pointer" onClick={() => {setViewMode('home'); setSearchQuery(''); window.history.pushState({}, '', '/');}}>CINEWISE</h1>
+          <h1 className="text-2xl font-black text-red-600 italic tracking-tighter cursor-pointer" onClick={() => {setViewMode('home'); setSearchQuery(''); handleCloseMovie();}}>CINEWISE</h1>
           <nav className="hidden md:flex gap-6 text-[10px] font-black uppercase tracking-widest">
             <button onClick={() => setViewMode('home')} className={viewMode === 'home' ? 'text-white border-b-2 border-red-600' : 'text-zinc-500 hover:text-white'}>Home</button>
             <button onClick={() => setViewMode('news')} className={viewMode === 'news' ? 'text-white border-b-2 border-red-600' : 'text-zinc-500 hover:text-white'}>2026 News</button>
           </nav>
         </div>
         <div className="relative">
-          <input type="text" placeholder="SEARCH..." className="bg-zinc-900/80 border border-zinc-800 rounded-full py-2 px-10 text-[10px] w-40 md:w-80 outline-none focus:ring-1 focus:ring-red-600" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <input type="text" placeholder="SEARCH MOVIES..." className="bg-zinc-900/80 border border-zinc-800 rounded-full py-2 px-10 text-[10px] w-40 md:w-80 outline-none focus:ring-1 focus:ring-red-600" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
           <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 text-xs"></i>
         </div>
       </header>
 
       {viewMode === 'disclaimer' ? (
-        <div className="pt-32 px-6 max-w-4xl mx-auto min-h-screen">
+        <div className="pt-32 px-6 max-w-4xl mx-auto min-h-screen animate-in fade-in duration-500">
           <h1 className="text-4xl font-black italic mb-6">DISCLAIMER</h1>
-          <p className="text-zinc-400 italic">All streaming data is provided via official YouTube and TMDB APIs. We do not host illegal content.</p>
-          <button onClick={() => setViewMode('home')} className="mt-8 text-red-600 font-bold">← BACK HOME</button>
+          <p className="text-zinc-400 italic leading-relaxed">CineWise is a movie discovery platform. All trailer content and movie data are served via official YouTube and TMDB APIs. We do not host copyrighted files.</p>
+          <button onClick={() => setViewMode('home')} className="mt-8 text-red-600 font-bold hover:underline">← BACK TO DISCOVERY</button>
         </div>
       ) : (
         <>
-          {/* Banner Restored */}
+          {/* Hero Banner Restore */}
           {!searchQuery && viewMode === 'home' && trending[0] && (
             <section className="relative h-[80vh] w-full flex items-center px-6 md:px-16 overflow-hidden">
               <img src={getImageUrl(trending[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover" alt="Banner" />
@@ -196,13 +219,13 @@ const App: React.FC = () => {
 
       <MovieDetailModal movie={selectedMovie} onClose={handleCloseMovie} />
 
-      {/* Footer Restored */}
+      {/* Footer Restore */}
       <footer className="py-12 bg-zinc-950 text-center border-t border-zinc-900">
         <div className="flex justify-center gap-8 text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4">
-          <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600">Disclaimer</button>
-          <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600">Privacy Policy</button>
+          <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600 transition-colors">Disclaimer</button>
+          <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600 transition-colors">Privacy Policy</button>
         </div>
-        <p className="text-xs text-zinc-700 font-bold">&copy; 2026 CINEWISE - OFFICIAL NETWORK</p>
+        <p className="text-xs text-zinc-700 font-bold">&copy; 2026 CINEWISE - OFFICIAL STREAMING NETWORK</p>
       </footer>
     </div>
   );
