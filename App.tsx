@@ -508,13 +508,13 @@ const App: React.FC = () => {
             {!searchQuery && (
               <>
                 <section>
-                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 mb-8 flex items-center gap-4">Trending Globally <span className="h-px flex-1 bg-zinc-900"></span></h2>
+                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 mb-8 flex items-center gap-4">Trending Globally & 2026 Release Dates <span className="h-px flex-1 bg-zinc-900"></span></h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
                     {trending.map(movie => <MovieCard key={movie.id} movie={movie} onClick={setSelectedMovie} />)}
                   </div>
                 </section>
                 <section>
-                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 mb-8 flex items-center gap-4">Popular Choices <span className="h-px flex-1 bg-zinc-900"></span></h2>
+                  <h2 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 mb-8 flex items-center gap-4">Popular Choices & Upcoming Release Dates <span className="h-px flex-1 bg-zinc-900"></span></h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
                     {popular.map(movie => <MovieCard key={movie.id} movie={movie} onClick={setSelectedMovie} />)}
                   </div>
