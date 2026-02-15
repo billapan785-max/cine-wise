@@ -450,7 +450,7 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen pb-20 overflow-x-hidden bg-zinc-950 text-white ${selectedMovie ? 'h-screen overflow-hidden' : ''}`}>
-      <h1 className="sr-only">CineWise - Watch Trending Hollywood Movies & Trailers Online</h1>
+      <h1 className="sr-only">Trending AMC Movies & 2026 Hollywood Release Dates Online</h1>
       <header className={`fixed top-0 w-full z-[50] transition-all duration-500 px-6 md:px-12 py-4 flex items-center justify-between ${isScrolled ? 'bg-zinc-950/95 shadow-2xl backdrop-blur-xl border-b border-zinc-900' : 'bg-transparent'}`}>
         <div className="flex items-center gap-12">
           <h1 className="text-2xl font-black text-red-600 tracking-tighter uppercase italic cursor-pointer select-none" onClick={resetView}>CineWise</h1>
