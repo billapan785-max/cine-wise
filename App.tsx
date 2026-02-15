@@ -139,18 +139,24 @@ const App: React.FC = () => {
     document.title = 'CineWise - 2026 Trending Hollywood Updates';
   };
 
-  const fetchData = useCallback(async () => {
-    const [tRes, pRes] = await Promise.all([
-      fetch(`${TMDB_BASE_URL}/trending/movie/day?api_key=${TMDB_API_KEY}`),
-      fetch(`${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}`)
-    ]);
-    const [tData, pData] = await Promise.all([tRes.json(), pRes.json()]);
-    setTrending(tData.results || []);
-    setPopular(pData.results || []);
+ const fetchData = useCallback(async (page: number = 1, type: 'trending' | 'popular' = 'trending') => {
+    const endpoint = type === 'trending' 
+      ? `${TMDB_BASE_URL}/trending/movie/day?api_key=${TMDB_API_KEY}&page=${page}`
+      : `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=${page}`;
+    
+    const res = await fetch(endpoint);
+    const data = await res.json();
+    
+    if (type === 'trending') {
+      setTrending(prev => page === 1 ? data.results : [...prev, ...data.results]);
+    } else {
+      setPopular(prev => page === 1 ? data.results : [...prev, ...data.results]);
+    }
   }, []);
 
   useEffect(() => {
-    fetchData();
+    fetchData(1, 'trending');
+    fetchData(1, 'popular');
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -213,6 +219,21 @@ const App: React.FC = () => {
                 </div>
               ))}
             </div>
+            {/* LOAD MORE BUTTON START */}
+            {!searchQuery && (
+              <div className="flex justify-center mt-16 mb-10">
+                <button 
+                  onClick={() => {
+                    const nextPage = viewMode === 'home' ? (trending.length / 20) + 1 : (popular.length / 20) + 1;
+                    fetchData(nextPage, viewMode === 'home' ? 'trending' : 'popular');
+                  }} 
+                  className="bg-zinc-900 hover:bg-red-600 border border-zinc-800 text-white font-black px-12 py-4 rounded-2xl transition-all active:scale-95 shadow-xl tracking-widest text-xs"
+                >
+                  LOAD MORE MOVIES
+                </button>
+              </div>
+            )}
+            {/* LOAD MORE BUTTON END */}
           </main>
         </>
       )}
