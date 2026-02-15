@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { GoogleGenAI } from "@google/genai";
 
 // --- TYPES & INTERFACES ---
 export interface Movie {
@@ -23,21 +22,7 @@ const getImageUrl = (path: string, size: 'w500' | 'original' = 'w500') => {
   return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
 };
 
-// --- INTERNAL COMPONENTS (Fixes Build Errors) ---
-
-const Notification: React.FC<{ message: string; isVisible: boolean; onClose: () => void }> = ({ message, isVisible, onClose }) => {
-  useEffect(() => {
-    if (isVisible) { const timer = setTimeout(onClose, 3000); return () => clearTimeout(timer); }
-  }, [isVisible, onClose]);
-  if (!isVisible) return null;
-  return (
-    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] animate-bounce">
-      <div className="bg-white text-black px-6 py-3 rounded-full font-bold shadow-2xl flex items-center gap-3">
-        <i className="fa-solid fa-circle-check text-green-600"></i> {message}
-      </div>
-    </div>
-  );
-};
+// --- INTERNAL COMPONENTS ---
 
 const MovieCard: React.FC<{ movie: Movie; onClick: (m: Movie) => void }> = ({ movie, onClick }) => (
   <div className="relative group cursor-pointer transition-all duration-300 transform hover:scale-105" onClick={() => onClick(movie)}>
@@ -53,17 +38,30 @@ const MovieCard: React.FC<{ movie: Movie; onClick: (m: Movie) => void }> = ({ mo
 
 const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> = ({ movie, onClose }) => {
   if (!movie) return null;
+
+  // Trailer Search Function
+  const watchTrailer = () => {
+    const query = encodeURIComponent(`${movie.title} official trailer ${movie.release_date?.split('-')[0]}`);
+    window.open(`https://www.youtube.com/results?search_query=${query}`, '_blank');
+  };
+
   return (
     <div className="fixed inset-0 z-[200] bg-zinc-950 overflow-y-auto animate-in fade-in duration-300">
       <button onClick={onClose} className="fixed top-6 left-6 z-[210] bg-black/60 hover:bg-red-600 w-12 h-12 rounded-full flex items-center justify-center text-white transition-all"><i className="fa-solid fa-arrow-left"></i></button>
-      <div className="relative h-[50vh] md:h-[75vh] w-full">
+      <div className="relative h-[55vh] md:h-[75vh] w-full">
         <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover" alt={movie.title} />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent"></div>
-        <div className="absolute bottom-0 left-0 p-8 md:p-16">
-          <h2 className="text-4xl md:text-8xl font-black uppercase italic tracking-tighter leading-none">{movie.title}</h2>
-          <div className="flex gap-4 mt-4 text-sm font-bold">
-            <span className="text-green-500">{Math.round(movie.vote_average * 10)}% Match</span>
-            <span className="text-zinc-400">{movie.release_date?.split('-')[0]}</span>
+        <div className="absolute bottom-0 left-0 p-8 md:p-16 w-full">
+          <h2 className="text-4xl md:text-8xl font-black uppercase italic tracking-tighter leading-none mb-6">{movie.title}</h2>
+          <div className="flex flex-wrap gap-4 items-center">
+             <button 
+               onClick={watchTrailer}
+               className="bg-white text-black font-black px-8 py-3 rounded-lg hover:bg-red-600 hover:text-white transition-all flex items-center gap-2 text-sm active:scale-95"
+             >
+               <i className="fa-solid fa-play"></i> WATCH TRAILER
+             </button>
+             <span className="text-green-500 font-bold">{Math.round(movie.vote_average * 10)}% Match</span>
+             <span className="text-zinc-400 font-bold">{movie.release_date?.split('-')[0]}</span>
           </div>
         </div>
       </div>
@@ -116,16 +114,15 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen bg-zinc-950 text-white ${selectedMovie ? 'h-screen overflow-hidden' : ''}`}>
-      {/* SEO H1 */}
-      <h1 className="sr-only">CineWise - Watch Trending Hollywood Movies & 2026 Release Dates</h1>
+      <h1 className="sr-only">CineWise - Watch Trending Hollywood Movies & Trailers Online</h1>
 
       <header className={`fixed top-0 w-full z-[100] transition-all duration-500 px-6 md:px-12 py-4 flex items-center justify-between ${isScrolled ? 'bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-900' : 'bg-transparent'}`}>
         <div className="flex items-center gap-10">
           <h1 className="text-2xl font-black text-red-600 italic tracking-tighter cursor-pointer" onClick={() => {setViewMode('home'); setSearchQuery('');}}>CINEWISE</h1>
           <nav className="hidden md:flex gap-6 text-[10px] font-black uppercase tracking-widest">
-            <button onClick={() => setViewMode('home')} className={viewMode === 'home' ? 'text-white' : 'text-zinc-500 hover:text-white'}>Home</button>
-            <button onClick={() => setViewMode('news')} className={viewMode === 'news' ? 'text-white' : 'text-zinc-500 hover:text-white'}>2026 News</button>
-            <button onClick={() => setViewMode('blogs')} className={viewMode === 'blogs' ? 'text-white' : 'text-zinc-500 hover:text-white'}>Guides</button>
+            <button onClick={() => setViewMode('home')} className={viewMode === 'home' ? 'text-white border-b border-red-600' : 'text-zinc-500 hover:text-white'}>Home</button>
+            <button onClick={() => setViewMode('news')} className={viewMode === 'news' ? 'text-white border-b border-red-600' : 'text-zinc-500 hover:text-white'}>2026 News</button>
+            <button onClick={() => setViewMode('blogs')} className={viewMode === 'blogs' ? 'text-white border-b border-red-600' : 'text-zinc-500 hover:text-white'}>Guides</button>
           </nav>
         </div>
         <form onSubmit={handleSearch} className="relative">
@@ -134,16 +131,14 @@ const App: React.FC = () => {
         </form>
       </header>
 
-      {/* Banner Section */}
       {!searchQuery && viewMode === 'home' && trending[0] && (
         <section className="relative h-[85vh] w-full overflow-hidden">
           <img src={getImageUrl(trending[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover" alt="Banner" />
           <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/40 to-transparent"></div>
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent"></div>
           <div className="relative h-full flex flex-col justify-center px-6 md:px-16 max-w-4xl space-y-6">
-            <span className="text-red-600 font-black tracking-[0.4em] text-[10px] uppercase flex items-center gap-3"><span className="h-px w-8 bg-red-600"></span> Spotlight Title</span>
+            <span className="text-red-600 font-black tracking-[0.4em] text-[10px] uppercase">Spotlight Title</span>
             <h2 className="text-5xl md:text-8xl font-black tracking-tighter leading-none italic uppercase">{trending[0].title}</h2>
-            <p className="text-lg text-zinc-300 line-clamp-3 italic font-light">"{trending[0].overview}"</p>
             <button onClick={() => setSelectedMovie(trending[0])} className="bg-white text-black font-black px-10 py-4 rounded-xl hover:bg-zinc-200 w-fit text-sm transition-transform active:scale-95">VIEW DETAILS</button>
           </div>
         </section>
@@ -158,23 +153,20 @@ const App: React.FC = () => {
             </div>
           </section>
         ) : (
-          <div className="space-y-20">
-            <section>
-              <h2 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 mb-8 flex items-center gap-4">
-                {viewMode === 'home' ? 'Trending Global' : viewMode === 'news' ? '2026 Production News' : 'Cinematic Guides'}
-                <span className="h-px flex-1 bg-zinc-900"></span>
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
-                {(viewMode === 'home' ? trending : popular).map(m => <MovieCard key={m.id} movie={m} onClick={setSelectedMovie} />)}
-              </div>
-            </section>
-          </div>
+          <section>
+            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 mb-8 flex items-center gap-4">
+              {viewMode === 'home' ? 'Trending Now' : viewMode === 'news' ? '2026 Production News' : 'Cinematic Guides'}
+              <span className="h-px flex-1 bg-zinc-900"></span>
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
+              {(viewMode === 'home' ? trending : popular).map(m => <MovieCard key={m.id} movie={m} onClick={setSelectedMovie} />)}
+            </div>
+          </section>
         )}
       </main>
 
       <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
 
-      {/* Footer */}
       <footer className="w-full py-8 bg-zinc-950 text-zinc-500 text-center border-t border-zinc-800">
         <p className="text-sm">&copy; 2026 MovieBox - All Trending Hollywood Updates</p>
         <div className="flex justify-center gap-4 mt-2 text-xs">
