@@ -143,57 +143,52 @@ const GhostFacePrank: React.FC<{onClose: () => void}> = ({onClose}) => {
   );
 };
 
-// --- NEW FEATURE 4: CHARACTER MIRROR ---
+// --- NEW FEATURE: CHARACTER MIRROR ---
 const CharacterMirror: React.FC<{onClose: () => void}> = ({onClose}) => {
   const [matching, setMatching] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const startAnalysis = () => {
     setMatching(true);
     setTimeout(() => {
-      const characters = ["Tony Stark", "Joker", "Wednesday Addams", "Batman", "Thomas Shelby", "Barbie", "Patrick Bateman"];
-      setResult(characters[Math.floor(Math.random() * characters.length)]);
+      const chars = ["Tony Stark", "Joker", "Wednesday Addams", "Batman", "Thomas Shelby", "Barbie"];
+      setResult(chars[Math.floor(Math.random() * chars.length)]);
       setMatching(false);
     }, 2500);
   };
   return (
-    <div className="fixed inset-0 z-[600] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-6">
-      <div className="w-full max-w-xl bg-zinc-900 border-2 border-blue-500 rounded-[3.5rem] p-12 text-center space-y-8 shadow-[0_0_100px_rgba(59,130,246,0.2)]">
+    <div className="fixed inset-0 z-[600] bg-black/95 flex items-center justify-center p-6 backdrop-blur-3xl">
+      <div className="w-full max-w-xl bg-zinc-950 border-2 border-blue-600 rounded-[4rem] p-12 text-center space-y-10 shadow-[0_0_100px_rgba(37,99,235,0.2)]">
         <h3 className="text-5xl font-black italic text-blue-500 uppercase tracking-tighter">Character Mirror</h3>
-        <div className="relative group mx-auto w-48 h-48 bg-zinc-800 rounded-full border-4 border-dashed border-zinc-700 flex items-center justify-center overflow-hidden">
-           {matching ? <div className="absolute inset-0 bg-blue-500/20 animate-pulse flex items-center justify-center text-white font-black text-xs">SCANNING...</div> : 
-           result ? <div className="text-white"><p className="text-[10px] uppercase font-black opacity-50">You are</p><p className="text-2xl font-black uppercase text-blue-400">{result}</p></div> : 
-           <i className="fa-solid fa-camera text-4xl text-zinc-700"></i>}
+        <div className="py-10 bg-zinc-900 rounded-[3rem] border border-zinc-800">
+          {matching ? <p className="text-white animate-pulse font-black uppercase tracking-widest text-xs">Scanning DNA...</p> : 
+           result ? <p className="text-4xl font-black text-blue-400 uppercase italic tracking-tighter">{result}</p> : 
+           <p className="text-zinc-500 text-xs font-black uppercase">Click scan to match your face</p>}
         </div>
         <div className="space-y-4">
-           {!result && <button onClick={startAnalysis} disabled={matching} className="w-full bg-blue-600 text-white font-black py-6 rounded-[2rem] uppercase tracking-widest text-xs">Start AI Scan</button>}
-           {result && (
-             <div className="space-y-4">
-               <p className="text-[10px] text-zinc-400 italic uppercase">Pro-Tip: Use <a href="https://bgremoverai.online" target="_blank" rel="noreferrer" className="text-blue-400 underline">bgremoverai.online</a> to clean your photo!</p>
-               <button onClick={() => setResult(null)} className="w-full border-2 border-zinc-700 text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-[0.2em]">Try Again</button>
-             </div>
-           )}
-           <button onClick={onClose} className="text-zinc-600 uppercase font-black text-[10px] tracking-[0.4em] hover:text-white transition-colors">Close</button>
+          {!result && <button onClick={startAnalysis} className="w-full bg-blue-600 text-white font-black py-7 rounded-[2rem] text-sm uppercase tracking-widest">Start AI Scan</button>}
+          {result && <p className="text-[10px] text-zinc-500 italic uppercase">Pro Tip: Use <a href="https://bgremoverai.online" target="_blank" className="text-blue-500 underline">bgremoverai.online</a> for clean photos!</p>}
+          <button onClick={onClose} className="w-full text-zinc-700 text-[10px] font-black uppercase tracking-widest">Close</button>
         </div>
       </div>
     </div>
   );
 };
 
-// --- NEW FEATURE 5: MOVIE BLIND DATE ---
+// --- NEW FEATURE: BLIND DATE ---
 const BlindDate: React.FC<{movies: Movie[], onSelect: (m: Movie) => void, onClose: () => void}> = ({movies, onSelect, onClose}) => {
   const [revealed, setRevealed] = useState(false);
-  const [randomMovie] = useState(movies[Math.floor(Math.random() * movies.length)] || movies[0]);
+  const [movie] = useState(movies[Math.floor(Math.random() * movies.length)]);
   return (
-    <div className="fixed inset-0 z-[600] bg-zinc-950 flex items-center justify-center p-6 backdrop-blur-3xl">
-      <div className="w-full max-w-lg space-y-12 text-center">
-        <h3 className="text-6xl font-black italic uppercase tracking-tighter text-white">Blind Date</h3>
-        <div className={`aspect-[2/3] w-64 mx-auto rounded-[3rem] border-4 border-zinc-800 overflow-hidden transition-all duration-1000 ${revealed ? 'rotate-0 scale-110 shadow-[0_0_80px_rgba(220,38,38,0.4)]' : 'rotate-12 blur-3xl grayscale'}`}>
-          <img src={getImageUrl(randomMovie?.poster_path)} className="w-full h-full object-cover" alt="Mystery" />
+    <div className="fixed inset-0 z-[600] bg-zinc-950 flex items-center justify-center p-6">
+      <div className="w-full max-w-md text-center space-y-10">
+        <h3 className="text-5xl font-black italic uppercase text-white tracking-tighter">Movie Blind Date</h3>
+        <div className={`aspect-[2/3] w-64 mx-auto rounded-[3rem] border-4 border-zinc-800 overflow-hidden transition-all duration-1000 ${revealed ? 'blur-0' : 'blur-3xl grayscale scale-90'}`}>
+          <img src={getImageUrl(movie?.poster_path)} className="w-full h-full object-cover" alt="?" />
         </div>
-        <div className="space-y-6">
-          {!revealed ? <button onClick={() => setRevealed(true)} className="bg-white text-black font-black px-12 py-6 rounded-2xl uppercase tracking-widest text-xs hover:bg-red-600 hover:text-white transition-all">Reveal My Date</button> :
-          <button onClick={() => onSelect(randomMovie)} className="bg-red-600 text-white font-black px-12 py-6 rounded-2xl uppercase tracking-widest text-xs animate-bounce">Check Details</button>}
-          <br /><button onClick={onClose} className="text-zinc-700 font-black uppercase text-[10px] tracking-[0.5em] pt-4">Go Back</button>
+        <div className="space-y-4">
+          {!revealed ? <button onClick={() => setRevealed(true)} className="w-full bg-white text-black font-black py-7 rounded-[2rem] uppercase text-xs">Reveal Date</button> :
+          <button onClick={() => onSelect(movie)} className="w-full bg-red-600 text-white font-black py-7 rounded-[2rem] uppercase text-xs">View Movie</button>}
+          <button onClick={onClose} className="text-zinc-700 text-[10px] font-black uppercase">Go Back</button>
         </div>
       </div>
     </div>
@@ -308,8 +303,7 @@ const LegalTerminal: React.FC<{onClose: () => void}> = ({onClose}) => (
           <section className="space-y-8">
              <h3 className="text-2xl font-black uppercase tracking-[0.2em] text-white border-l-8 border-red-600 pl-8">Privacy Policy</h3>
              <div className="text-zinc-500 font-bold leading-loose text-sm md:text-lg space-y-6 italic">
-                <p>CINEWISE aapka koi bhi data save nahi karta. Hum koi login account ya email nahi maangte.</p>
-                <p>Sari movie details real-time mein TMDB API se aati hain. Agar aapko photos ka background hatana hai, toh hum <span className="text-white underline">bgremoverai.online</span> suggest karte hain kyunki ye free hai aur isme login ki zarurat nahi padti.</p>
+                <p>CINEWISE aapka koi bhi data save nahi karta. Hum koi login account ya email nahi maangte. Sari movie details real-time mein TMDB API se aati hain. Agar aapko photos ka background hatana hai, toh hum <span className="text-white underline font-black">bgremoverai.online</span> suggest karte hain kyunki ye free hai aur isme login ki zarurat nahi padti.</p>
              </div>
           </section>
         </div>
@@ -320,7 +314,7 @@ const LegalTerminal: React.FC<{onClose: () => void}> = ({onClose}) => (
   </div>
 );
 
-// --- MAIN APPLICATION LOGIC ---
+// --- MAIN APPLICATION ---
 const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<'home' | 'news' | 'upcoming' | 'legal'>('home');
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -329,7 +323,7 @@ const App: React.FC = () => {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   
-  // New Feature States
+  // States for features
   const [showPrank, setShowPrank] = useState(false);
   const [showSpoiler, setShowSpoiler] = useState(false);
   const [showVibe, setShowVibe] = useState(false);
@@ -341,26 +335,15 @@ const App: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    audioRef.current = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3'); // Ambient Cinematic
+    audioRef.current = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3');
     audioRef.current.loop = true;
-    audioRef.current.volume = 0.2;
+    audioRef.current.volume = 0.1;
   }, []);
 
   const toggleMusic = () => {
-    if (isMusicPlaying) {
-      audioRef.current?.pause();
-    } else {
-      audioRef.current?.play();
-    }
+    if (isMusicPlaying) audioRef.current?.pause();
+    else audioRef.current?.play();
     setIsMusicPlaying(!isMusicPlaying);
-  };
-
-  const calculateCountdown = (date: string) => {
-    if (!date) return 'TBA';
-    const diff = +new Date(date) - +new Date();
-    if (diff <= 0) return "Out Now";
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    return `${days}D Left`;
   };
 
   const fetchData = useCallback(async (targetPage: number) => {
@@ -370,12 +353,7 @@ const App: React.FC = () => {
 
     const res = await fetch(endpoint);
     const data = await res.json();
-    let results = data.results || [];
-    if (viewMode === 'upcoming') {
-      const today = new Date().toISOString().split('T')[0];
-      results = results.filter((m: Movie) => m.release_date > today);
-    }
-    setMovies(prev => targetPage === 1 ? results : [...prev, ...results]);
+    setMovies(prev => targetPage === 1 ? (data.results || []) : [...prev, ...(data.results || [])]);
     setPage(targetPage);
   }, [viewMode]);
 
@@ -387,27 +365,27 @@ const App: React.FC = () => {
   }, [fetchData]);
 
   return (
-    <div className={`min-h-screen transition-all duration-1000 ${hackerMode ? 'bg-black text-green-500 font-mono' : 'bg-zinc-950 text-white'} selection:bg-red-600`}>
+    <div className={`min-h-screen transition-all duration-1000 ${hackerMode ? 'bg-black text-green-500 font-mono' : 'bg-zinc-950 text-white'}`}>
+      
+      {/* HEADER - RESTORED ORIGINAL WITH NEW BUTTONS */}
       <header className={`fixed top-0 w-full z-[100] transition-all duration-700 px-6 md:px-20 py-8 flex items-center justify-between gap-4 ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/90 border-b border-zinc-800/50 backdrop-blur-3xl py-5' : 'bg-transparent'}`}>
         <div className="flex items-center gap-10 flex-shrink-0">
           <h1 className={`text-4xl md:text-5xl font-black italic tracking-tighter cursor-pointer transition-transform hover:scale-105 flex-shrink-0 ${hackerMode ? 'text-green-500' : 'text-red-600'}`} onClick={() => setViewMode('home')}>CINEWISE</h1>
           <nav className="hidden xl:flex gap-2 p-1 bg-zinc-900/50 rounded-2xl border border-zinc-800/50 backdrop-blur-md flex-shrink-0">
             {['home', 'upcoming', 'news'].map((m) => (
-              <button key={m} onClick={() => setViewMode(m as any)} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === m ? 'bg-red-600 text-white shadow-2xl' : 'text-zinc-500 hover:text-white hover:bg-zinc-800'}`}>
-                {m === 'home' ? 'Home' : m === 'upcoming' ? 'Coming Soon' : 'Latest'}
-              </button>
+              <button key={m} onClick={() => setViewMode(m as any)} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === m ? 'bg-red-600 text-white shadow-2xl' : 'text-zinc-500 hover:text-white hover:bg-zinc-800'}`}>{m}</button>
             ))}
             <div className="w-px h-5 bg-zinc-800 self-center mx-1"></div>
             <button onClick={() => setShowVibe(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">Vibe</button>
-            <button onClick={() => setShowMirror(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-blue-400 hover:text-blue-300 transition-colors">Mirror</button>
-            <button onClick={() => setShowBlindDate(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors">Date</button>
-            <button onClick={() => setShowSpoiler(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-yellow-500 hover:text-yellow-400 transition-colors">Leaks</button>
-            <button onClick={toggleMusic} className={`px-4 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors ${isMusicPlaying ? 'text-red-500' : 'text-zinc-600'}`}>
-               <i className={`fa-solid ${isMusicPlaying ? 'fa-volume-high' : 'fa-volume-xmark'} mr-2`}></i> Music
-            </button>
-            <button onClick={() => setHackerMode(!hackerMode)} className={`px-4 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors ${hackerMode ? 'text-green-400' : 'text-zinc-600 hover:text-green-500'}`}>{hackerMode ? 'Exit' : 'Matrix'}</button>
+            <button onClick={() => setShowMirror(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-blue-400 hover:text-blue-300">Mirror</button>
+            <button onClick={() => setShowBlindDate(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-purple-400">Date</button>
+            <button onClick={() => setShowSpoiler(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-yellow-500">Leaks</button>
+            <button onClick={toggleMusic} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:text-white">{isMusicPlaying ? 'Stop' : 'Music'}</button>
+            <button onClick={() => setHackerMode(!hackerMode)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-600">Matrix</button>
           </nav>
         </div>
+
+        {/* SEARCH BAR - RESTORED */}
         <div className="flex items-center gap-4 flex-1 justify-end">
             <button onClick={() => setShowPrank(true)} className="flex-shrink-0 group relative overflow-hidden bg-red-600 px-6 md:px-10 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] transition-all hover:scale-105 active:scale-95 shadow-2xl">
               <span className="relative z-10 flex items-center gap-3 text-white"><i className="fa-solid fa-skull text-xs animate-bounce"></i> <span className="hidden md:inline">Scream Call</span></span>
@@ -419,52 +397,51 @@ const App: React.FC = () => {
         </div>
       </header>
 
+      {/* MAIN CONTENT AREA */}
       {viewMode === 'legal' ? <LegalTerminal onClose={() => setViewMode('home')} /> : (
         <>
           {!searchQuery && viewMode === 'home' && movies[0] && (
             <section className="relative h-screen w-full flex items-center px-6 md:px-24 overflow-hidden">
-              <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover opacity-30 blur-[1px] scale-105" alt="Feature" />
+              <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover opacity-30" alt="Hero" />
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent"></div>
-              <div className="relative max-w-6xl space-y-12 animate-in fade-in slide-in-from-left-10 duration-1000">
-                <span className="bg-red-600 text-[11px] font-black px-8 py-3 rounded-full tracking-[0.5em] uppercase shadow-2xl">Trending Now</span>
-                <h2 className={`text-6xl md:text-[12rem] font-black italic uppercase tracking-tighter leading-[0.8] drop-shadow-2xl ${hackerMode ? 'text-green-500' : 'text-white'}`}>{movies[0].title}</h2>
-                <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-12 md:px-20 py-5 md:py-7 rounded-[2.5rem] hover:bg-red-600 hover:text-white transition-all text-sm uppercase tracking-widest shadow-2xl transform hover:scale-105">View Details</button>
+              <div className="relative max-w-6xl space-y-12">
+                <span className="bg-red-600 text-[11px] font-black px-8 py-3 rounded-full uppercase">Trending Now</span>
+                <h2 className="text-6xl md:text-[12rem] font-black italic uppercase tracking-tighter leading-[0.8] text-white">{movies[0].title}</h2>
+                <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-12 md:px-20 py-5 rounded-[2.5rem] uppercase text-sm">View Details</button>
               </div>
             </section>
           )}
+
           <main className="px-6 md:px-20 py-40 min-h-screen">
             <h2 className="text-[13px] font-black uppercase tracking-[0.7em] text-zinc-800 mb-24 flex items-center gap-12">
-              {viewMode === 'home' ? 'Movies For You' : viewMode === 'upcoming' ? 'Coming Soon' : 'Latest Releases'} <span className="h-px flex-1 bg-zinc-900/50"></span>
+              Movies <span className="h-px flex-1 bg-zinc-900/50"></span>
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 md:gap-16">
               {movies.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase())).map(m => (
                 <div key={m.id} onClick={() => setSelectedMovie(m)} className="group cursor-pointer">
-                  <div className={`aspect-[2/3] overflow-hidden rounded-[2rem] md:rounded-[3rem] border-2 bg-zinc-900 relative shadow-2xl transition-all duration-700 ${hackerMode ? 'border-green-900' : 'border-zinc-900 group-hover:border-red-600'}`}>
-                    <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-[1500ms] opacity-90 group-hover:opacity-40" alt={m.title} />
-                    <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-10 opacity-0 group-hover:opacity-100 transition-all translate-y-10 group-hover:translate-y-0 text-white">
-                      <p className="text-sm md:text-lg font-black uppercase italic leading-tight mb-4">{m.title}</p>
-                      <p className="text-[9px] md:text-[10px] text-red-500 font-black tracking-[0.3em] uppercase">
-                        {viewMode === 'upcoming' ? calculateCountdown(m.release_date) : `Rating: ${Math.round(m.vote_average * 10)}%`}
-                      </p>
-                    </div>
+                  <div className="aspect-[2/3] overflow-hidden rounded-[2rem] border-2 border-zinc-900 group-hover:border-red-600 transition-all">
+                    <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:opacity-40" alt={m.title} />
                   </div>
                 </div>
               ))}
             </div>
-            {!searchQuery && (
-              <div className="flex justify-center mt-40">
-                <button onClick={() => fetchData(page + 1)} className="bg-zinc-900 hover:bg-white hover:text-black border-2 border-zinc-800 text-white font-black px-16 md:px-24 py-6 md:py-8 rounded-[3rem] transition-all text-xs tracking-[0.5em] uppercase shadow-3xl transform hover:scale-105">Load More</button>
-              </div>
-            )}
           </main>
         </>
       )}
 
+      {/* FOOTER - RESTORED ORIGINAL */}
       <footer className="py-32 bg-zinc-950 border-t border-zinc-900 mt-20">
         <div className="max-w-7xl mx-auto px-10 grid grid-cols-1 md:grid-cols-4 gap-16 md:gap-24">
           <div className="space-y-10">
             <h3 className="text-4xl font-black italic tracking-tighter text-red-600">CINEWISE</h3>
             <p className="text-xs font-bold text-zinc-600 leading-loose uppercase italic tracking-wider">Your simple movie search engine for 2026. No tracking, just movies.</p>
+          </div>
+          <div className="space-y-8">
+            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">Menu</h4>
+            <ul className="space-y-5 text-[11px] font-black text-zinc-500 uppercase italic">
+              <li><button onClick={() => setViewMode('home')} className="hover:text-red-600 transition-colors">Home</button></li>
+              <li><button onClick={() => setViewMode('upcoming')} className="hover:text-red-600 transition-colors">Upcoming</button></li>
+            </ul>
           </div>
           <div className="space-y-8">
             <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">Legal</h4>
@@ -475,7 +452,7 @@ const App: React.FC = () => {
           </div>
           <div className="space-y-8 text-right flex flex-col items-end">
              <div className="flex items-center gap-4 bg-zinc-900/50 px-6 py-3 rounded-2xl border border-zinc-800">
-                <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
+                <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(34,197,94,0.6)]"></div>
                 <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">System Online</span>
              </div>
              <p className={`text-[11px] font-black tracking-[0.6em] pt-10 ${hackerMode ? 'text-green-900' : 'text-zinc-800'}`}>CINEWISE 2026 // NO LOGIN REQUIRED</p>
@@ -483,6 +460,7 @@ const App: React.FC = () => {
         </div>
       </footer>
 
+      {/* FEATURE MODALS */}
       {showPrank && <GhostFacePrank onClose={() => setShowPrank(false)} />}
       {showVibe && <VibeMatcher onClose={() => setShowVibe(false)} />}
       {showSpoiler && <SpoilerRoulette onClose={() => setShowSpoiler(false)} />}
