@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 // --- TYPES & INTERFACES ---
 export interface Movie {
@@ -34,7 +34,39 @@ const getImageUrl = (path: string, size: 'w92' | 'w185' | 'w500' | 'original' = 
   return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
 };
 
-// --- FEATURE 1: SPOILER ROULETTE (SIMPLE) ---
+// --- MATRIX EFFECT LOGIC ---
+const MatrixBackground: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()*&^";
+    const fontSize = 16;
+    const columns = canvas.width / fontSize;
+    const drops: number[] = Array(Math.floor(columns)).fill(1);
+    const draw = () => {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#0F0";
+      ctx.font = fontSize + "px monospace";
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars.charAt(Math.floor(Math.random() * chars.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    };
+    const interval = setInterval(draw, 33);
+    return () => clearInterval(interval);
+  }, []);
+  return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none opacity-20" />;
+};
+
+// --- FEATURE 1: SPOILER ROULETTE ---
 const SpoilerRoulette: React.FC<{onClose: () => void}> = ({onClose}) => {
   const [spoiler, setSpoiler] = useState('');
   const [isSpinning, setIsSpinning] = useState(false);
@@ -43,7 +75,9 @@ const SpoilerRoulette: React.FC<{onClose: () => void}> = ({onClose}) => {
     "AVATAR 3: Varang, the leader of the Ash People, will survive until the 5th movie.",
     "SPIDER-MAN 4: Miles Morales will make a 5-second cameo in the post-credits.",
     "JOKER 2: The ending features a massive musical number inside a burning hospital.",
-    "BEYOND THE SPIDER-VERSE: Production uses a new AI engine for 2026."
+    "BEYOND THE SPIDER-VERSE: Production uses a new AI engine for 2026.",
+    "BATMAN 2: Barry Keoghan's Joker has 20 minutes of screen time.",
+    "DEADPOOL 4: It's being discussed as a full-blown multiverse road trip."
   ];
   const spin = () => {
     setIsSpinning(true);
@@ -76,7 +110,9 @@ const VibeMatcher: React.FC<{onClose: () => void}> = ({onClose}) => {
     { name: 'Villain Era', desc: 'Powerful, dark, and misunderstood.' },
     { name: 'Lonely God', desc: 'Melancholic excellence in solitude.' },
     { name: 'Main Character', desc: 'The world revolves around you.' },
-    { name: 'Cyberpunk Soul', desc: 'High tech, low life, neon dreams.' }
+    { name: 'Cyberpunk Soul', desc: 'High tech, low life, neon dreams.' },
+    { name: 'Pure Chaos', desc: 'Unpredictable energy and fast pacing.' },
+    { name: 'Vintage Noir', desc: 'Classic, slow-burn mystery vibes.' }
   ];
   const [match, setMatch] = useState<{name: string, desc: string} | null>(null);
   return (
@@ -161,7 +197,7 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
         setProviders(results.slice(0, 3));
       });
       fetch(`${TMDB_BASE_URL}/movie/${movie.id}/credits?api_key=${TMDB_API_KEY}`).then(res => res.json()).then(data => {
-        setCast(data.cast?.slice(0, 10) || []);
+        setCast(data.cast?.slice(0, 12) || []);
       });
     } else {
       setVideoKey(null); setProviders([]); setCast([]); setShowPlayer(false);
@@ -325,7 +361,10 @@ const App: React.FC = () => {
   }, [fetchData]);
 
   return (
-    <div className={`min-h-screen transition-all duration-1000 ${hackerMode ? 'bg-black text-green-500 font-mono' : 'bg-zinc-950 text-white'} selection:bg-red-600`}>
+    <div className={`min-h-screen transition-all duration-1000 ${hackerMode ? 'bg-black text-green-500' : 'bg-zinc-950 text-white'} selection:bg-red-600`}>
+      
+      {hackerMode && <MatrixBackground />}
+
       <header className={`fixed top-0 w-full z-[100] transition-all duration-700 px-6 md:px-20 py-8 flex items-center justify-between gap-4 ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/90 border-b border-zinc-800/50 backdrop-blur-3xl py-5' : 'bg-transparent'}`}>
         <div className="flex items-center gap-10 flex-shrink-0">
           <h1 className={`text-4xl md:text-5xl font-black italic tracking-tighter cursor-pointer transition-transform hover:scale-105 flex-shrink-0 ${hackerMode ? 'text-green-500' : 'text-red-600'}`} onClick={() => setViewMode('home')}>CINEWISE</h1>
@@ -357,14 +396,14 @@ const App: React.FC = () => {
       {viewMode === 'legal' ? (
         <LegalTerminal onClose={() => setViewMode('home')} />
       ) : (
-        <>
+        <div className="relative z-10">
           {!searchQuery && viewMode === 'home' && movies[0] && (
             <section className="relative h-screen w-full flex items-center px-6 md:px-24 overflow-hidden">
               <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover opacity-30 blur-[1px] scale-105" alt="Feature" />
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent"></div>
               <div className="relative max-w-6xl space-y-12 animate-in fade-in slide-in-from-left-10 duration-1000">
                 <span className="bg-red-600 text-[11px] font-black px-8 py-3 rounded-full tracking-[0.5em] uppercase shadow-2xl">Trending Now</span>
-                <h2 className={`text-6xl md:text-[12rem] font-black italic uppercase tracking-tighter leading-[0.8] drop-shadow-2xl ${hackerMode ? 'text-green-500' : 'text-white'}`}>{movies[0].title}</h2>
+                <h2 className={`text-6xl md:text-[12rem] font-black italic uppercase tracking-tighter leading-[0.8] drop-shadow-2xl ${hackerMode ? 'text-green-500 font-mono' : 'text-white'}`}>{movies[0].title}</h2>
                 <div className="flex gap-6">
                   <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-12 md:px-20 py-5 md:py-7 rounded-[2.5rem] hover:bg-red-600 hover:text-white transition-all text-sm uppercase tracking-widest shadow-2xl transform hover:scale-105">View Details</button>
                 </div>
@@ -398,14 +437,14 @@ const App: React.FC = () => {
               </div>
             )}
           </main>
-        </>
+        </div>
       )}
 
-      <footer className="py-32 bg-zinc-950 border-t border-zinc-900 mt-20">
+      <footer className="py-32 bg-zinc-950 border-t border-zinc-900 mt-20 relative z-10">
         <div className="max-w-7xl mx-auto px-10 grid grid-cols-1 md:grid-cols-4 gap-16 md:gap-24">
           <div className="space-y-10">
             <h3 className="text-4xl font-black italic tracking-tighter text-red-600">CINEWISE</h3>
-            <p className="text-xs font-bold text-zinc-600 leading-loose uppercase italic tracking-wider">Your simple movie search engine for 2026. No tracking, just movies.</p>
+            <p className="text-xs font-bold text-zinc-600 leading-loose uppercase italic tracking-wider">Your simple movie search engine for 2026. No tracking, just movies. Fast, clean, and anonymous.</p>
           </div>
           <div className="space-y-8">
             <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">Menu</h4>
