@@ -34,7 +34,56 @@ const getImageUrl = (path: string, size: 'w92' | 'w185' | 'w500' | 'original' = 
   return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
 };
 
-// --- MOVIE DETAIL MODAL (TRAILER + CAST + OTT LOGIC) ---
+// --- GHOST-FACE PRANK COMPONENT (NEW IDEA FOR USA) ---
+const GhostFacePrank: React.FC = () => {
+  const [victimName, setVictimName] = useState('');
+  const [isCalling, setIsCalling] = useState(false);
+
+  const startPrank = () => {
+    if (!victimName) return alert("Ghostface needs a name...");
+    setIsCalling(true);
+    
+    // Scary Phone Ringing
+    const ringtone = new Audio('https://www.soundjay.com/phone/phone-calling-1.mp3');
+    ringtone.play();
+
+    setTimeout(() => {
+      ringtone.pause();
+      const msg = new SpeechSynthesisUtterance();
+      msg.text = `Hello... ${victimName}... I am standing right behind you. Do you like scary movies? I'm coming for you at moviebox dot shop!`;
+      msg.pitch = 0.1; 
+      msg.rate = 0.6;
+      window.speechSynthesis.speak(msg);
+      setIsCalling(false);
+    }, 4500);
+  };
+
+  return (
+    <div className="w-full max-w-4xl mx-auto mb-20 p-10 bg-gradient-to-br from-red-950/40 to-black rounded-[3rem] border-2 border-red-600/30 shadow-[0_0_50px_rgba(220,38,38,0.1)] relative overflow-hidden">
+      <div className="relative z-10 space-y-6">
+        <h3 className="text-3xl font-black italic text-red-600 uppercase tracking-tighter">Ghostface is Watching...</h3>
+        <p className="text-zinc-500 text-sm font-bold tracking-widest uppercase">Receive a personalized death call from 2026's most feared killer.</p>
+        <div className="flex flex-col md:flex-row gap-4">
+          <input 
+            type="text" 
+            placeholder="ENTER YOUR NAME..." 
+            className="flex-1 bg-black/50 border border-zinc-800 rounded-2xl py-5 px-8 text-white outline-none focus:border-red-600 transition-all font-bold"
+            value={victimName}
+            onChange={(e) => setVictimName(e.target.value)}
+          />
+          <button 
+            onClick={startPrank}
+            className="bg-red-600 text-white font-black px-12 py-5 rounded-2xl hover:bg-white hover:text-black transition-all shadow-2xl uppercase tracking-widest text-sm"
+          >
+            {isCalling ? 'RINGING...' : 'RECEIVE CALL'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- MOVIE DETAIL MODAL ---
 const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> = ({ movie, onClose }) => {
   const [videoKey, setVideoKey] = useState<string | null>(null);
   const [providers, setProviders] = useState<WatchProvider[]>([]);
@@ -43,7 +92,6 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
 
   useEffect(() => {
     if (movie) {
-      // 1. Fetch Trailer Data
       fetch(`${TMDB_BASE_URL}/movie/${movie.id}/videos?api_key=${TMDB_API_KEY}`)
         .then(res => res.json())
         .then(data => {
@@ -51,7 +99,6 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
           setVideoKey(trailer ? trailer.key : null);
         });
 
-      // 2. Fetch Global Watch Providers
       fetch(`${TMDB_BASE_URL}/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`)
         .then(res => res.json())
         .then(data => {
@@ -59,7 +106,6 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
           setProviders(results.slice(0, 3));
         });
 
-      // 3. Fetch Full Cast Details
       fetch(`${TMDB_BASE_URL}/movie/${movie.id}/credits?api_key=${TMDB_API_KEY}`)
         .then(res => res.json())
         .then(data => {
@@ -115,7 +161,7 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
                 <p className="text-xl md:text-3xl text-zinc-300 font-light leading-relaxed italic antialiased">"{movie.overview}"</p>
               </div>
               <div className="space-y-8">
-                 <h3 className="text-xs font-black uppercase tracking-[0.5em] text-zinc-500">Available Platforms</h3>
+                 <h3 className="text-xs font-black uppercase tracking-[0.5em] text-red-600">Available Platforms</h3>
                  <div className="flex flex-wrap gap-4">
                   {providers.length > 0 ? providers.map(p => (
                     <img key={p.provider_id} src={getImageUrl(p.logo_path, 'w92')} className="w-14 h-14 rounded-2xl border border-zinc-700 shadow-xl hover:scale-110 transition-transform" alt={p.provider_name} />
@@ -163,7 +209,6 @@ const App: React.FC = () => {
     const slug = m.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
     window.history.pushState({ movieId: m.id }, '', `/${slug}`);
     document.title = `${m.title} (2026) - Full Cast, Trailer & Info | CineWise`;
-    document.querySelector('meta[name="description"]')?.setAttribute('content', `Explore official cast, production news and trailer for ${m.title}. Ready for 2026 release.`);
   };
 
   const handleCloseMovie = () => {
@@ -230,8 +275,7 @@ const App: React.FC = () => {
         <div className="pt-48 px-6 max-w-6xl mx-auto min-h-screen space-y-16 animate-in slide-in-from-bottom-10 duration-1000">
           <h1 className="text-7xl md:text-9xl font-black italic tracking-tighter text-white">LEGAL & PRIVACY</h1>
           <div className="space-y-10 text-2xl text-zinc-500 font-light italic leading-relaxed border-l-4 border-red-600 pl-10">
-            <p>CineWise is a next-generation cinema intelligence platform. We provide metadata, trailers, and production news via TMDB and YouTube API ecosystems. Our site does not host, store, or transmit any copyrighted video files.</p>
-            <p>Purpose: Educational research, cinema trend analysis for the year 2026, and community discussion. All intellectual properties belong to their respective studios and production houses.</p>
+            <p>CineWise is a next-generation cinema intelligence platform. We provide metadata via TMDB. Our site does not host copyrighted files.</p>
           </div>
           <button onClick={() => setViewMode('home')} className="bg-white text-black px-16 py-6 rounded-2xl font-black text-sm hover:bg-red-600 hover:text-white transition-all shadow-2xl uppercase tracking-widest">Return to Database</button>
         </div>
@@ -250,6 +294,9 @@ const App: React.FC = () => {
           )}
 
           <main className="px-6 md:px-20 py-32 min-h-screen">
+            {/* PRANK SECTION FOR USA AUDIENCE */}
+            {!searchQuery && viewMode === 'home' && <GhostFacePrank />}
+
             <h2 className="text-[12px] font-black uppercase tracking-[0.5em] text-zinc-700 mb-20 flex items-center gap-10">
               {viewMode === 'home' ? 'Trending Discovery' : viewMode === 'upcoming' ? '2026 Roadmap' : 'Production Feeds'} <span className="h-px flex-1 bg-zinc-900/50"></span>
             </h2>
@@ -258,8 +305,8 @@ const App: React.FC = () => {
                 <div key={m.id} onClick={() => handleOpenMovie(m)} className="group cursor-pointer">
                   <div className="aspect-[2/3] overflow-hidden rounded-[2.5rem] border-2 border-zinc-900 bg-zinc-900 relative shadow-2xl group-hover:border-red-600/40 transition-all duration-500">
                     <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-90 group-hover:opacity-30" alt={m.title} />
-                    <div className="absolute inset-0 flex flex-col justify-end p-8 opacity-0 group-hover:opacity-100 transition-all translate-y-6 group-hover:translate-y-0">
-                      <p className="text-sm font-black uppercase italic leading-tight mb-3 text-white">{m.title}</p>
+                    <div className="absolute inset-0 flex flex-col justify-end p-8 opacity-0 group-hover:opacity-100 transition-all translate-y-6 group-hover:translate-y-0 text-white">
+                      <p className="text-sm font-black uppercase italic leading-tight mb-3">{m.title}</p>
                       <p className="text-[10px] text-red-500 font-bold tracking-[0.2em] uppercase">⏳ {calculateCountdown(m.release_date)}</p>
                     </div>
                   </div>
