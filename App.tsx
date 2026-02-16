@@ -247,9 +247,9 @@ const App: React.FC = () => {
   const [hackerMode, setHackerMode] = useState(false);
 
   const calculateCountdown = (date: string) => {
-    if (!date) return 'Coming 2026';
+    if (!date) return 'Coming Soon';
     const diff = +new Date(date) - +new Date();
-    if (diff <= 0) return "Global Release";
+    if (diff <= 0) return "Released";
     return `${Math.floor(diff / (1000 * 60 * 60 * 24))} Days Left`;
   };
 
@@ -282,11 +282,11 @@ const App: React.FC = () => {
               className={`px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === 'home' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>
               Discovery
             </button>
-            {/* UPDATED UPCOMING BUTTON */}
+            {/* UPCOMING BUTTON - NOW FETCHING UPCOMING MOVIES */}
             <button 
               onClick={() => setViewMode('upcoming')} 
               className={`px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === 'upcoming' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>
-              2026
+              Upcoming
             </button>
             <button 
               onClick={() => setViewMode('news')} 
@@ -332,7 +332,7 @@ const App: React.FC = () => {
               <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover opacity-40 blur-[2px] scale-105" alt="Feature" />
               <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/20 to-transparent"></div>
               <div className="relative max-w-5xl space-y-10 animate-in slide-in-from-left duration-1000">
-                <span className="bg-red-600 text-[11px] font-black px-6 py-2 rounded-full tracking-[0.4em] uppercase">Breaking 2026 Update</span>
+                <span className="bg-red-600 text-[11px] font-black px-6 py-2 rounded-full tracking-[0.4em] uppercase">Breaking Update</span>
                 <h2 className={`text-7xl md:text-[10rem] font-black italic uppercase tracking-tighter leading-[0.85] drop-shadow-2xl ${hackerMode ? 'text-green-400' : 'text-white'}`}>{movies[0].title}</h2>
                 <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-16 py-6 rounded-[2rem] hover:bg-red-600 hover:text-white transition-all text-sm tracking-widest uppercase">Explore This Title</button>
               </div>
@@ -341,7 +341,7 @@ const App: React.FC = () => {
 
           <main className="px-6 md:px-20 py-32 min-h-screen">
             <h2 className="text-[12px] font-black uppercase tracking-[0.5em] text-zinc-700 mb-20 flex items-center gap-10">
-              {viewMode === 'home' ? 'Trending Discovery' : viewMode === 'upcoming' ? '2026 Roadmap' : 'Production Feeds'} <span className="h-px flex-1 bg-zinc-900/50"></span>
+              {viewMode === 'home' ? 'Trending Discovery' : viewMode === 'upcoming' ? 'Upcoming Releases' : 'Production Feeds'} <span className="h-px flex-1 bg-zinc-900/50"></span>
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-12">
               {movies.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase())).map(m => (
