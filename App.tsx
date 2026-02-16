@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
-// --- TYPES & INTERFACES ---
+// ==========================================
+// 1. TYPES & INTERFACES (Architecture)
+// ==========================================
 export interface Movie {
   id: number;
   title: string;
@@ -9,6 +11,8 @@ export interface Movie {
   backdrop_path: string;
   release_date: string;
   vote_average: number;
+  genre_ids: number[];
+  popularity: number;
 }
 
 interface CastMember {
@@ -24,43 +28,62 @@ interface WatchProvider {
   logo_path: string;
 }
 
-// --- CONFIGURATION ---
+// ==========================================
+// 2. CONFIGURATION & CONSTANTS
+// ==========================================
 const TMDB_API_KEY = 'cfedd233fe8494b29646beabc505d193';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
+const GENRES: Record<number, string> = {
+  28: "Action", 12: "Adventure", 16: "Animation", 35: "Comedy", 80: "Crime",
+  99: "Documentary", 18: "Drama", 10751: "Family", 14: "Fantasy", 36: "History",
+  27: "Horror", 10402: "Music", 9648: "Mystery", 10749: "Romance", 878: "Sci-Fi"
+};
+
 const getImageUrl = (path: string, size: 'w92' | 'w185' | 'w500' | 'original' = 'w500') => {
-  if (!path) return 'https://images.unsplash.com/photo-1634157703702-3c124b455499?q=80&w=200&auto=format&fit=crop';
+  if (!path) return 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=500';
   return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
 };
 
-// --- UTILITY: DATE CALCULATOR ---
-const getReleaseStatus = (date: string) => {
-  if (!date) return 'Unknown Date';
-  const releaseDate = new Date(date);
-  const today = new Date();
-  const diffTime = releaseDate.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+// ==========================================
+// 3. THE DATE ENGINE (Requested Feature)
+// ==========================================
+const DateEngine = {
+  getDaysRemaining: (dateString: string): number => {
+    const releaseDate = new Date(dateString);
+    const today = new Date();
+    const diffTime = releaseDate.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  },
 
-  if (diffDays > 0) {
-    return `${diffDays} Days to Go`;
-  } else if (diffDays === 0) {
-    return "Releasing Today";
-  } else {
-    return `Released ${Math.abs(diffDays)} Days Ago`;
+  formatHumanDate: (dateString: string): string => {
+    if (!dateString) return "TBA";
+    return new Date(dateString).toLocaleDateString('en-US', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  },
+
+  getReleaseLabel: (dateString: string) => {
+    const diff = DateEngine.getDaysRemaining(dateString);
+    if (diff > 0) return { text: `In ${diff} Days`, color: 'bg-blue-600', isFuture: true };
+    if (diff === 0) return { text: "Releasing Today", color: 'bg-green-600', isFuture: true };
+    return { text: `Released ${Math.abs(diff)} days ago`, color: 'bg-zinc-800', isFuture: false };
+  },
+
+  isNewRelease: (dateString: string): boolean => {
+    const diff = DateEngine.getDaysRemaining(dateString);
+    return diff < 0 && diff > -30; // Last 30 days
   }
 };
 
-const formatFullDate = (date: string) => {
-  if (!date) return "TBA";
-  return new Date(date).toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  });
-};
+// ==========================================
+// 4. UI COMPONENTS (Modular)
+// ==========================================
 
-// --- FEATURE: MATRIX EFFECT ---
+// --- Matrix Rain Backdrop ---
 const MatrixRain: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -68,11 +91,13 @@ const MatrixRain: React.FC = () => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     const columns = canvas.width / 20;
     const drops: number[] = Array(Math.floor(columns)).fill(1);
-    const draw = () => {
+
+    const render = () => {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#0F0';
@@ -84,140 +109,69 @@ const MatrixRain: React.FC = () => {
         drops[i]++;
       });
     };
-    const timer = setInterval(draw, 33);
-    return () => clearInterval(timer);
+    const interval = setInterval(render, 33);
+    return () => clearInterval(interval);
   }, []);
   return <canvas ref={canvasRef} className="fixed inset-0 z-0 opacity-20 pointer-events-none" />;
 };
 
-// --- FEATURE: SPOILER ROULETTE ---
-const SpoilerRoulette: React.FC<{onClose: () => void}> = ({onClose}) => {
-  const [spoiler, setSpoiler] = useState('');
-  const [isSpinning, setIsSpinning] = useState(false);
-  const leaks = [
-    "SCREAM 7: Ghostface is actually working for a secret cinema society.",
-    "AVATAR 3: The fire nation will use volcanic technology to attack.",
-    "SPIDER-MAN 4: Peter starts working at a tech startup to fund his suit.",
-    "JOKER 2: Arthur Fleck's cell mate is a former circus performer.",
-    "BEYOND THE SPIDER-VERSE: Gwen Stacy from 5 alternate timelines appear.",
-    "SUPERMAN 2025: Lex Luthor discovers Kryptonite in an ancient temple.",
-    "BATMAN 2: The Penguin hires a mercenary to hunt the bat.",
-    "GLADIATOR 2: The final battle takes place in a flooded Colosseum.",
-    "MISSION IMPOSSIBLE 9: Ethan Hunt goes into space for a 20-minute sequence."
-  ];
-  const spin = () => {
-    setIsSpinning(true);
-    setTimeout(() => {
-      setSpoiler(leaks[Math.floor(Math.random() * leaks.length)]);
-      setIsSpinning(false);
-    }, 1200);
-  };
+// --- Movie Card Component ---
+const MovieCard: React.FC<{ movie: Movie; onClick: (m: Movie) => void }> = ({ movie, onClick }) => {
+  const dateInfo = useMemo(() => DateEngine.getReleaseLabel(movie.release_date), [movie.release_date]);
+  
   return (
-    <div className="fixed inset-0 z-[600] bg-black/98 backdrop-blur-3xl flex items-center justify-center p-6 animate-in fade-in duration-500">
-      <div className="w-full max-w-xl bg-zinc-900 border-2 border-yellow-500 rounded-[3.5rem] p-12 text-center space-y-10 shadow-[0_0_100px_rgba(234,179,8,0.15)]">
-        <h3 className="text-5xl font-black italic text-yellow-500 uppercase tracking-tighter">Movie Leaks</h3>
-        <div className="py-12 border-y border-zinc-800">
-          <p className={`text-2xl font-bold italic transition-all duration-500 ${isSpinning ? 'opacity-20 blur-xl scale-90' : 'opacity-100 text-white'}`}>
-            {spoiler || "Accessing 2026 confidential files..."}
+    <div 
+      onClick={() => onClick(movie)}
+      className="group relative bg-zinc-900 rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-zinc-800 hover:border-red-600"
+    >
+      <div className="aspect-[2/3] relative">
+        <img 
+          src={getImageUrl(movie.poster_path)} 
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          alt={movie.title}
+        />
+        <div className="absolute top-4 right-4">
+          <span className={`${dateInfo.color} text-[8px] font-black uppercase tracking-tighter px-3 py-1.5 rounded-full text-white backdrop-blur-md`}>
+            {dateInfo.text}
+          </span>
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6">
+          <button className="bg-white text-black text-[10px] font-black py-3 rounded-xl uppercase tracking-widest translate-y-4 group-hover:translate-y-0 transition-transform">
+            Analyze File
+          </button>
+        </div>
+      </div>
+      <div className="p-5 space-y-1">
+        <h4 className="text-[12px] font-black uppercase text-white truncate">{movie.title}</h4>
+        <div className="flex justify-between items-center">
+          <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+            {movie.release_date.split('-')[0]} • {GENRES[movie.genre_ids[0]] || 'Cinema'}
           </p>
-        </div>
-        <div className="space-y-4">
-          <button onClick={spin} className="w-full bg-yellow-500 text-black font-black py-7 rounded-[2rem] hover:scale-105 transition-all uppercase tracking-widest text-sm">SPIN ROULETTE</button>
-          <button onClick={onClose} className="text-zinc-600 uppercase font-black text-[10px] tracking-[0.4em] hover:text-white transition-colors">Abort Access</button>
+          <span className="text-red-600 text-[10px] font-black italic">{Math.round(movie.vote_average * 10)}%</span>
         </div>
       </div>
     </div>
   );
 };
 
-// --- FEATURE: VIBE MATCHER ---
-const VibeMatcher: React.FC<{onClose: () => void}> = ({onClose}) => {
-  const [match, setMatch] = useState<{name: string, desc: string} | null>(null);
-  const vibes = [
-    { name: 'Villain Era', desc: 'Powerful, dark, and completely misunderstood.' },
-    { name: 'Lonely God', desc: 'Melancholic excellence in total solitude.' },
-    { name: 'Main Character', desc: 'The universe literally revolves around you.' },
-    { name: 'Cyberpunk Soul', desc: 'High tech, low life, and bright neon dreams.' },
-    { name: 'Plot Armor', desc: 'Invincible energy, nothing can touch you today.' },
-    { name: 'Final Girl', desc: 'Survival instincts are at an all-time high.' },
-    { name: 'The Mentor', desc: 'Wise, calm, and slightly detached from reality.' }
-  ];
-  return (
-    <div className="fixed inset-0 z-[600] bg-zinc-950/98 flex items-center justify-center p-6 backdrop-blur-md">
-      <div className="w-full max-w-2xl bg-white rounded-[4rem] p-16 text-black space-y-12">
-        <h3 className="text-6xl font-black italic uppercase tracking-tighter">Vibe Check</h3>
-        <div className="grid grid-cols-2 gap-4">
-          {vibes.map(v => (
-            <button key={v.name} onClick={() => setMatch(v)} className="border-4 border-black py-6 rounded-3xl font-black uppercase text-[10px] hover:bg-black hover:text-white transition-all transform hover:-translate-y-1">
-              {v.name}
-            </button>
-          ))}
-        </div>
-        {match && (
-          <div className="bg-zinc-100 p-10 rounded-[3rem] text-center animate-bounce-short border-2 border-black/5">
-            <p className="text-[10px] font-black uppercase tracking-widest mb-2 opacity-40">Matched Persona</p>
-            <p className="text-5xl font-black italic uppercase text-red-600 tracking-tighter mb-2">{match.name}</p>
-            <p className="text-xs font-bold text-zinc-500 italic uppercase">{match.desc}</p>
-          </div>
-        )}
-        <button onClick={onClose} className="w-full text-center text-[10px] font-black uppercase tracking-[0.5em] opacity-30">Back to Cinema</button>
-      </div>
-    </div>
-  );
-};
-
-// --- FEATURE: SCREAM CALL ---
-const GhostFacePrank: React.FC<{onClose: () => void}> = ({onClose}) => {
-  const [victim, setVictim] = useState('');
-  const [status, setStatus] = useState<'idle' | 'calling' | 'active'>('idle');
-  const triggerCall = () => {
-    if (!victim) return;
-    setStatus('calling');
-    setTimeout(() => {
-      setStatus('active');
-      const speech = new SpeechSynthesisUtterance(`Hello... ${victim}... I am outside. Do you want to see a movie?`);
-      speech.pitch = 0.1; speech.rate = 0.7;
-      window.speechSynthesis.speak(speech);
-      speech.onend = () => setStatus('idle');
-    }, 3000);
-  };
-  return (
-    <div className="fixed inset-0 z-[600] bg-black/95 flex items-center justify-center p-6 backdrop-blur-xl">
-      <div className="w-full max-w-xl bg-zinc-950 border-2 border-red-600 rounded-[4rem] p-12 text-center space-y-12">
-        <div className="space-y-4">
-          <h3 className="text-6xl font-black italic text-red-600 uppercase tracking-tighter">Scream Call</h3>
-          <p className="text-[10px] text-zinc-600 font-black uppercase tracking-[0.4em]">Encrypted Voice Link</p>
-        </div>
-        <input type="text" placeholder="Enter Victim Name" className="w-full bg-zinc-900 border-2 border-zinc-800 rounded-3xl py-8 px-8 text-white text-center text-xl outline-none focus:border-red-600 transition-all" value={victim} onChange={e => setVictim(e.target.value)} />
-        <button onClick={triggerCall} className="w-full bg-red-600 text-white font-black py-8 rounded-[2rem] hover:scale-105 transition-all uppercase tracking-widest">
-          {status === 'idle' ? 'START CALL' : status === 'calling' ? '📞 CONNECTING...' : '🔪 ACTIVE'}
-        </button>
-        <button onClick={onClose} className="text-[10px] text-zinc-500 uppercase font-black">Close Prank</button>
-      </div>
-    </div>
-  );
-};
-
-// --- MOVIE DETAIL MODAL ---
+// --- Detailed Modal ---
 const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> = ({ movie, onClose }) => {
-  const [video, setVideo] = useState<string | null>(null);
-  const [cast, setCast] = useState<CastMember[]>([]);
-  const [providers, setProviders] = useState<WatchProvider[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<{cast: CastMember[], providers: WatchProvider[], video: string | null}>({
+    cast: [], providers: [], video: null
+  });
 
   useEffect(() => {
     if (movie) {
-      setLoading(true);
       Promise.all([
         fetch(`${TMDB_BASE_URL}/movie/${movie.id}/videos?api_key=${TMDB_API_KEY}`).then(r => r.json()),
         fetch(`${TMDB_BASE_URL}/movie/${movie.id}/credits?api_key=${TMDB_API_KEY}`).then(r => r.json()),
         fetch(`${TMDB_BASE_URL}/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`).then(r => r.json())
-      ]).then(([vData, cData, pData]) => {
-        const trailer = vData.results?.find((v: any) => v.type === 'Trailer');
-        setVideo(trailer?.key || null);
-        setCast(cData.cast?.slice(0, 15) || []);
-        setProviders(pData.results?.US?.flatrate || pData.results?.IN?.flatrate || []);
-        setLoading(false);
+      ]).then(([v, c, p]) => {
+        setData({
+          video: v.results?.find((x: any) => x.type === 'Trailer')?.key || null,
+          cast: c.cast?.slice(0, 12) || [],
+          providers: p.results?.US?.flatrate || []
+        });
       });
     }
   }, [movie]);
@@ -225,57 +179,58 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
   if (!movie) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] bg-zinc-950/98 backdrop-blur-3xl overflow-y-auto pt-20 px-4 animate-in fade-in duration-500">
-      <div className="max-w-6xl mx-auto bg-zinc-900 rounded-[4rem] overflow-hidden border border-zinc-800 shadow-2xl relative">
-        <button onClick={onClose} className="absolute top-8 right-8 z-[210] bg-black/50 text-white w-12 h-12 rounded-full hover:bg-red-600 transition-all flex items-center justify-center">✕</button>
+    <div className="fixed inset-0 z-[500] bg-black/95 backdrop-blur-2xl overflow-y-auto animate-in fade-in zoom-in duration-300">
+      <div className="max-w-7xl mx-auto min-h-screen py-20 px-6">
+        <button onClick={onClose} className="fixed top-10 right-10 z-[510] bg-white text-black w-14 h-14 rounded-full font-black text-xl hover:bg-red-600 hover:text-white transition-all">✕</button>
         
-        <div className="aspect-video bg-black relative">
-          {video ? (
-            <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${video}?autoplay=1`} title="Trailer" frameBorder="0" allowFullScreen></iframe>
-          ) : (
-            <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover opacity-40" alt="Backdrop" />
-          )}
-        </div>
-
-        <div className="p-10 md:p-20 space-y-16">
-          <div className="space-y-6">
-            <h2 className="text-6xl md:text-9xl font-black uppercase italic tracking-tighter text-white">{movie.title}</h2>
-            <div className="flex flex-wrap gap-4 text-[10px] font-black uppercase tracking-widest">
-              <span className="bg-red-600 px-6 py-2 rounded-full text-white">{getReleaseStatus(movie.release_date)}</span>
-              <span className="bg-zinc-800 px-6 py-2 rounded-full text-zinc-400">Score: {Math.round(movie.vote_average * 10)}%</span>
-              <span className="bg-zinc-800 px-6 py-2 rounded-full text-zinc-400">{formatFullDate(movie.release_date)}</span>
+        <div className="grid lg:grid-cols-12 gap-12">
+          <div className="lg:col-span-8 space-y-12">
+            <div className="aspect-video bg-zinc-900 rounded-[3rem] overflow-hidden border border-zinc-800 shadow-2xl">
+              {data.video ? (
+                <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${data.video}?autoplay=1`} frameBorder="0" allowFullScreen></iframe>
+              ) : (
+                <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover opacity-50" />
+              )}
             </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-16">
-            <div className="md:col-span-2 space-y-6">
-              <h3 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-500">The Storyline</h3>
-              <p className="text-2xl md:text-3xl font-light text-zinc-300 italic leading-relaxed leading-snug">"{movie.overview}"</p>
-            </div>
+            
             <div className="space-y-6">
-              <h3 className="text-xs font-black uppercase tracking-[0.4em] text-red-600">Where to Watch</h3>
-              <div className="flex flex-wrap gap-4">
-                {providers.length > 0 ? providers.map(p => (
-                  <img key={p.provider_id} src={getImageUrl(p.logo_path, 'w92')} className="w-14 h-14 rounded-2xl border border-zinc-700" alt={p.provider_name} title={p.provider_name} />
-                )) : <p className="text-[10px] text-zinc-600 font-bold uppercase">No streaming data available for 2026</p>}
+              <div className="flex items-center gap-4">
+                <span className="bg-red-600 px-4 py-1 text-[10px] font-black uppercase tracking-widest">Confidential File</span>
+                <span className="text-zinc-500 font-mono text-xs">ID: {movie.id}-2026</span>
               </div>
+              <h2 className="text-7xl md:text-9xl font-black italic uppercase tracking-tighter text-white leading-[0.8]">{movie.title}</h2>
+              <div className="flex gap-8 border-y border-zinc-800 py-6">
+                <div>
+                  <p className="text-zinc-600 text-[10px] font-black uppercase tracking-widest mb-1">Release Protocol</p>
+                  <p className="text-white font-bold">{DateEngine.formatHumanDate(movie.release_date)}</p>
+                </div>
+                <div>
+                  <p className="text-zinc-600 text-[10px] font-black uppercase tracking-widest mb-1">Critical Rating</p>
+                  <p className="text-red-600 font-bold">{movie.vote_average.toFixed(1)} / 10</p>
+                </div>
+                <div>
+                  <p className="text-zinc-600 text-[10px] font-black uppercase tracking-widest mb-1">Popularity Rank</p>
+                  <p className="text-white font-bold">#{Math.round(movie.popularity)}</p>
+                </div>
+              </div>
+              <p className="text-2xl text-zinc-400 font-light italic leading-relaxed">{movie.overview}</p>
             </div>
           </div>
 
-          <div className="space-y-10">
-            <h3 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-500">Starring Cast</h3>
-            <div className="flex gap-10 overflow-x-auto pb-10 scrollbar-hide">
-              {cast.map(c => (
-                <div key={c.id} className="flex-shrink-0 w-32 md:w-44 text-center space-y-4">
-                  <div className="aspect-square rounded-full overflow-hidden border-2 border-zinc-800 hover:border-red-600 transition-all">
-                    <img src={getImageUrl(c.profile_path, 'w185')} className="w-full h-full object-cover" alt={c.name} />
+          <div className="lg:col-span-4 space-y-12">
+            <div className="bg-zinc-900 p-10 rounded-[3rem] border border-zinc-800 space-y-8">
+              <h3 className="text-xs font-black uppercase tracking-[0.4em] text-zinc-500">Personnel Involved</h3>
+              <div className="grid grid-cols-2 gap-6">
+                {data.cast.map(c => (
+                  <div key={c.id} className="flex items-center gap-3">
+                    <img src={getImageUrl(c.profile_path, 'w92')} className="w-12 h-12 rounded-full object-cover grayscale" />
+                    <div className="overflow-hidden">
+                      <p className="text-[10px] font-black text-white truncate uppercase">{c.name}</p>
+                      <p className="text-[8px] text-zinc-600 truncate uppercase">{c.character}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[11px] font-black uppercase text-white leading-none mb-1">{c.name}</p>
-                    <p className="text-[9px] font-bold text-zinc-600 uppercase italic leading-none">{c.character}</p>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -284,209 +239,243 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
   );
 };
 
-// --- LEGAL MODAL ---
-const LegalTerminal: React.FC<{onClose: () => void}> = ({onClose}) => (
-  <div className="fixed inset-0 z-[700] bg-zinc-950 overflow-y-auto animate-in fade-in duration-500">
-    <div className="max-w-4xl mx-auto py-32 px-10 space-y-20">
-      <div className="text-center space-y-4">
-        <h2 className="text-8xl md:text-[12rem] font-black italic uppercase tracking-tighter text-white">LEGAL</h2>
-        <p className="text-red-600 font-black tracking-[1em] uppercase text-[10px]">CINEWISE // 2026 ENCRYPTION</p>
-      </div>
-      <div className="space-y-12">
-        <section className="border-l-4 border-red-600 pl-8 space-y-4">
-          <h3 className="text-2xl font-black uppercase tracking-widest text-white">Privacy Protocol</h3>
-          <p className="text-zinc-500 font-bold text-lg italic leading-relaxed">
-            Hum koi bhi personal information collect nahi karte. CINEWISE is built for total anonymity. 
-            Movies ka data TMDB se load hota hai. Agar aapko images se background hatana hai, toh hum sirf 
-            <span className="text-white mx-2 underline cursor-pointer">bgremoverai.online</span> suggest karte hain kyunki wahan koi login nahi chahiye.
-          </p>
-        </section>
-        <section className="border-l-4 border-red-600 pl-8 space-y-4">
-          <h3 className="text-2xl font-black uppercase tracking-widest text-white">Usage Terms</h3>
-          <p className="text-zinc-500 font-bold text-lg italic leading-relaxed">
-            1. Yeh platform sirf educational aur entertainment ke liye hai. <br />
-            2. Hum koi pirated content host nahi karte, sirf metadata provide karte hain. <br />
-            3. Scream Prank tool ka use harrasment ke liye na karein.
-          </p>
-        </section>
-      </div>
-      <div className="text-center">
-        <button onClick={onClose} className="bg-white text-black font-black px-12 py-5 rounded-2xl hover:bg-red-600 hover:text-white transition-all text-xs uppercase tracking-widest">Acknowledge</button>
-      </div>
-    </div>
-  </div>
-);
-
-// --- MAIN APP COMPONENT ---
+// ==========================================
+// 5. CORE APPLICATION LOGIC
+// ==========================================
 const App: React.FC = () => {
-  const [view, setView] = useState<'home' | 'upcoming' | 'latest' | 'legal'>('home');
+  // --- States ---
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [view, setView] = useState<'trending' | 'upcoming' | 'top'>('trending');
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Movie | null>(null);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [hackerMode, setHackerMode] = useState(false);
-  
-  // Feature States
-  const [prank, setPrank] = useState(false);
-  const [roulette, setRoulette] = useState(false);
-  const [vibe, setVibe] = useState(false);
+  const [showLegal, setShowLegal] = useState(false);
 
-  const fetchMovies = useCallback(async (p: number, mode: string) => {
-    let url = `${TMDB_BASE_URL}/trending/movie/day?api_key=${TMDB_API_KEY}&page=${p}`;
-    if (mode === 'upcoming') url = `${TMDB_BASE_URL}/movie/upcoming?api_key=${TMDB_API_KEY}&page=${p}`;
-    if (mode === 'latest') url = `${TMDB_BASE_URL}/movie/now_playing?api_key=${TMDB_API_KEY}&page=${p}`;
-    
-    const res = await fetch(url);
-    const data = await res.json();
-    setMovies(prev => p === 1 ? data.results : [...prev, ...data.results]);
-    setPage(p);
+  // --- Data Fetching ---
+  const loadData = useCallback(async (pageNum: number, currentView: string, isAppend: boolean) => {
+    setLoading(true);
+    let endpoint = '/trending/movie/day';
+    if (currentView === 'upcoming') endpoint = '/movie/upcoming';
+    if (currentView === 'top') endpoint = '/movie/top_rated';
+
+    try {
+      const res = await fetch(`${TMDB_BASE_URL}${endpoint}?api_key=${TMDB_API_KEY}&page=${pageNum}`);
+      const data = await res.json();
+      setMovies(prev => isAppend ? [...prev, ...data.results] : data.results);
+      setPage(pageNum);
+    } catch (err) {
+      console.error("System Override Failed", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    fetchMovies(1, view);
-    const handleScroll = () => setIsScrolled(window.scrollY > 100);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [view, fetchMovies]);
+    loadData(1, view, false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [view, loadData]);
+
+  // --- Helpers ---
+  const filteredMovies = useMemo(() => {
+    return movies.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [movies, searchQuery]);
 
   return (
-    <div className={`min-h-screen ${hackerMode ? 'bg-black text-green-500 font-mono' : 'bg-zinc-950 text-white'} transition-colors duration-1000`}>
+    <div className={`min-h-screen transition-colors duration-1000 ${hackerMode ? 'bg-black text-green-500' : 'bg-zinc-950 text-white'}`}>
       
       {hackerMode && <MatrixRain />}
 
-      <header className={`fixed top-0 w-full z-[100] px-6 md:px-20 py-8 flex items-center justify-between transition-all duration-500 ${isScrolled || view !== 'home' ? 'bg-black/80 backdrop-blur-3xl py-4 border-b border-zinc-900' : 'bg-transparent'}`}>
-        <div className="flex items-center gap-12">
-          <h1 className="text-4xl font-black italic tracking-tighter text-red-600 cursor-pointer" onClick={() => setView('home')}>CINEWISE</h1>
-          <nav className="hidden xl:flex items-center gap-2 bg-zinc-900/50 p-1.5 rounded-2xl border border-zinc-800">
-            {['home', 'upcoming', 'latest'].map(m => (
-              <button key={m} onClick={() => setView(m as any)} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === m ? 'bg-red-600 text-white' : 'text-zinc-500 hover:text-white'}`}>
-                {m}
+      {/* --- NAVIGATION BAR --- */}
+      <nav className="fixed top-0 w-full z-[400] px-6 py-8 md:px-16 flex items-center justify-between pointer-events-none">
+        <div className="pointer-events-auto flex items-center gap-10">
+          <h1 
+            onClick={() => setView('trending')}
+            className="text-4xl font-black italic tracking-tighter text-red-600 cursor-pointer select-none"
+          >
+            CINEWISE.
+          </h1>
+          <div className="hidden xl:flex items-center gap-2 bg-black/50 backdrop-blur-3xl p-2 rounded-2xl border border-white/5">
+            {['trending', 'upcoming', 'top'].map(tab => (
+              <button 
+                key={tab}
+                onClick={() => setView(tab as any)}
+                className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all ${view === tab ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'}`}
+              >
+                {tab}
               </button>
             ))}
-            <div className="w-px h-4 bg-zinc-800 mx-2" />
-            <button onClick={() => setVibe(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white">Vibe</button>
-            <button onClick={() => setRoulette(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-yellow-500 hover:text-white">Leaks</button>
-            <button onClick={() => setHackerMode(!hackerMode)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-green-600 hover:text-white">{hackerMode ? 'Exit' : 'Matrix'}</button>
-          </nav>
-        </div>
-
-        <div className="flex items-center gap-4 flex-1 justify-end">
-          <button onClick={() => setPrank(true)} className="bg-red-600 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all">
-            <span className="hidden md:inline">Scream Call</span> 📞
-          </button>
-          <div className="relative group max-w-xs w-full">
-            <input type="text" placeholder="Search Database..." className="w-full bg-zinc-900/50 border-2 border-zinc-800 rounded-xl py-3 px-6 text-[10px] font-black outline-none focus:border-red-600 transition-all text-white" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
         </div>
-      </header>
 
-      {view === 'legal' ? (
-        <LegalTerminal onClose={() => setView('home')} />
-      ) : (
-        <div className="relative z-10">
-          {!search && view === 'home' && movies[0] && (
-            <section className="relative h-screen flex items-center px-10 md:px-24 overflow-hidden">
-              <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover opacity-30" alt="Hero" />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent" />
-              <div className="relative max-w-5xl space-y-10">
-                <span className="bg-red-600 px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest">Trending Choice</span>
-                <h2 className="text-7xl md:text-[10rem] font-black uppercase italic tracking-tighter leading-[0.85] text-white">{movies[0].title}</h2>
-                <button onClick={() => setSelected(movies[0])} className="bg-white text-black font-black px-16 py-6 rounded-[2rem] hover:bg-red-600 hover:text-white transition-all text-xs uppercase tracking-widest shadow-2xl">View Detailed File</button>
-              </div>
-            </section>
-          )}
-
-          <main className="px-6 md:px-20 py-40">
-            <div className="flex items-center gap-8 mb-20">
-              <h2 className="text-[12px] font-black uppercase tracking-[0.6em] text-zinc-700">{view} Archive</h2>
-              <div className="h-px flex-1 bg-zinc-900" />
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-10 md:gap-16">
-              {movies.filter(m => m.title.toLowerCase().includes(search.toLowerCase())).map(m => (
-                <div key={m.id} onClick={() => setSelected(m)} className="group cursor-pointer space-y-6">
-                  <div className="aspect-[2/3] rounded-[2.5rem] overflow-hidden border-2 border-zinc-900 group-hover:border-red-600 transition-all duration-700 relative bg-zinc-900">
-                    <img src={getImageUrl(m.poster_path)} className="w-full h-full object-cover opacity-90 group-hover:scale-110 transition-transform duration-1000 group-hover:opacity-40" alt={m.title} />
-                    <div className="absolute inset-0 flex flex-col justify-end p-8 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
-                      <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-2">{getReleaseStatus(m.release_date)}</p>
-                      <h4 className="text-lg font-black uppercase italic text-white leading-tight">{m.title}</h4>
-                    </div>
-                  </div>
-                  <div className="px-4">
-                    <h4 className="text-[11px] font-black uppercase text-zinc-300 truncate">{m.title}</h4>
-                    <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mt-1">{m.release_date.split('-')[0]} // {Math.round(m.vote_average * 10)}%</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-center mt-32">
-              <button onClick={() => fetchMovies(page + 1, view)} className="bg-zinc-900 border-2 border-zinc-800 text-white font-black px-20 py-7 rounded-[2.5rem] hover:bg-white hover:text-black transition-all text-[10px] uppercase tracking-[0.4em]">Load More Records</button>
-            </div>
-          </main>
+        <div className="pointer-events-auto flex items-center gap-4">
+          <div className="relative group">
+            <input 
+              type="text" 
+              placeholder="Query Database..."
+              className="bg-zinc-900/80 border border-zinc-800 rounded-xl px-6 py-3 text-[10px] font-black uppercase tracking-widest focus:border-red-600 outline-none w-64 transition-all focus:w-80"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <button 
+            onClick={() => setHackerMode(!hackerMode)}
+            className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all ${hackerMode ? 'bg-green-600 border-green-400 text-black' : 'bg-zinc-900 border-zinc-800 text-white'}`}
+          >
+            {hackerMode ? '?' : 'M'}
+          </button>
         </div>
+      </nav>
+
+      {/* --- HERO SECTION --- */}
+      {view === 'trending' && !searchQuery && movies[0] && (
+        <section className="relative h-screen flex items-center px-6 md:px-24 overflow-hidden select-none">
+          <div className="absolute inset-0 z-0">
+            <img 
+              src={getImageUrl(movies[0].backdrop_path, 'original')} 
+              className="w-full h-full object-cover opacity-30 scale-105" 
+              alt="Hero Backdrop" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/50 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent" />
+          </div>
+
+          <div className="relative z-10 max-w-5xl space-y-12">
+            <div className="space-y-4">
+              <span className="bg-white text-black px-6 py-2 text-[10px] font-black uppercase tracking-[0.3em]">Featured Protocol</span>
+              <h2 className="text-8xl md:text-[14rem] font-black italic uppercase tracking-tighter leading-[0.75] text-white">
+                {movies[0].title}
+              </h2>
+            </div>
+            <div className="flex gap-6 items-center">
+              <button 
+                onClick={() => setSelected(movies[0])}
+                className="bg-red-600 text-white px-12 py-6 rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] hover:bg-white hover:text-black transition-all shadow-2xl"
+              >
+                Access Details
+              </button>
+              <div className="h-px w-20 bg-zinc-800" />
+              <p className="text-zinc-500 font-black text-[10px] uppercase tracking-widest italic">Score: {movies[0].vote_average}/10</p>
+            </div>
+          </div>
+        </section>
       )}
 
-      {/* --- SITE STATS SECTION --- */}
-      <section className="px-10 py-24 border-y border-zinc-900 relative z-10">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
+      {/* --- MAIN GRID --- */}
+      <main className={`px-6 md:px-16 py-32 transition-all duration-1000 ${view !== 'trending' || searchQuery ? 'mt-20' : ''}`}>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
+          <div className="space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-[0.6em] text-red-600">Secure Database</h3>
+            <h2 className="text-6xl font-black italic uppercase tracking-tighter">{view} Records</h2>
+          </div>
+          <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest max-w-xs text-right">
+            Displaying synchronized metadata from global cinematic nodes. Total results: {filteredMovies.length}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-8 md:gap-12">
+          {filteredMovies.map((movie, idx) => (
+            <div key={`${movie.id}-${idx}`} className="animate-in fade-in slide-in-from-bottom-10 duration-700" style={{animationDelay: `${idx * 50}ms`}}>
+              <MovieCard movie={movie} onClick={setSelected} />
+            </div>
+          ))}
+        </div>
+
+        {/* --- PAGINATION --- */}
+        {!searchQuery && (
+          <div className="mt-40 flex flex-col items-center gap-10">
+            <div className="h-px w-full bg-zinc-900" />
+            <button 
+              onClick={() => loadData(page + 1, view, true)}
+              disabled={loading}
+              className="group relative px-20 py-8 bg-zinc-900 border border-zinc-800 rounded-[3rem] overflow-hidden transition-all hover:bg-white"
+            >
+              <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.5em] text-white group-hover:text-black">
+                {loading ? 'Decrypting...' : 'Load Next Sequence'}
+              </span>
+            </button>
+          </div>
+        )}
+      </main>
+
+      {/* --- STATS SECTION --- */}
+      <section className="bg-zinc-900/30 border-y border-zinc-900 py-32 px-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-20">
           {[
-            { label: 'Database Hits', val: '4.2M+' },
-            { label: 'Streaming Nodes', val: '128' },
-            { label: 'Daily Requests', val: '890K' },
-            { label: 'Uptime 2026', val: '100%' }
-          ].map(stat => (
-            <div key={stat.label} className="space-y-2">
-              <p className="text-4xl md:text-6xl font-black italic tracking-tighter text-white">{stat.val}</p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600">{stat.label}</p>
+            { label: 'Files Indexed', val: '842,000+' },
+            { label: 'Active Uplinks', val: '1,402' },
+            { label: 'Data Latency', val: '14ms' },
+            { label: 'System Year', val: '2026' }
+          ].map(s => (
+            <div key={s.label} className="space-y-4 text-center md:text-left">
+              <p className="text-5xl md:text-7xl font-black italic tracking-tighter text-white">{s.val}</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-600">{s.label}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <footer className="py-32 px-10 bg-zinc-950 relative z-10">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-20">
-          <div className="space-y-8">
-            <h3 className="text-4xl font-black italic tracking-tighter text-red-600">CINEWISE</h3>
-            <p className="text-xs font-bold text-zinc-600 uppercase italic leading-loose tracking-wider">
-              An open movie database protocol. Built for speed, privacy, and cinema enthusiasts. No registration, no cookies, just raw data.
+      {/* --- FOOTER --- */}
+      <footer className="bg-zinc-950 pt-40 pb-20 px-6 md:px-16 border-t border-zinc-900">
+        <div className="max-w-screen-2xl mx-auto grid md:grid-cols-12 gap-20">
+          <div className="md:col-span-4 space-y-10">
+            <h4 className="text-4xl font-black italic tracking-tighter text-white">CINEWISE.</h4>
+            <p className="text-sm font-bold text-zinc-600 uppercase italic leading-loose">
+              Anonymized movie intelligence platform. We provide metadata without tracking.
+              For image processing, use <span className="text-red-600 underline cursor-pointer">bgremoverai.online</span> - no login, no cost.
             </p>
           </div>
-          <div className="space-y-8">
-            <h4 className="text-[11px] font-black uppercase tracking-widest text-white">Navigation</h4>
-            <ul className="space-y-4 text-[11px] font-black text-zinc-500 uppercase italic">
-              <li><button onClick={() => setView('home')} className="hover:text-red-600">Archive Home</button></li>
-              <li><button onClick={() => setView('upcoming')} className="hover:text-red-600">Future Releases</button></li>
-              <li><button onClick={() => setView('latest')} className="hover:text-red-600">Current Waves</button></li>
+          
+          <div className="md:col-span-2 space-y-8">
+            <h5 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Nodes</h5>
+            <ul className="space-y-4 text-[11px] font-black uppercase text-zinc-600 italic">
+              <li className="hover:text-red-600 cursor-pointer" onClick={() => setView('trending')}>Global Trending</li>
+              <li className="hover:text-red-600 cursor-pointer" onClick={() => setView('upcoming')}>Future Archives</li>
+              <li className="hover:text-red-600 cursor-pointer" onClick={() => setView('top')}>Historical Best</li>
             </ul>
           </div>
-          <div className="space-y-8">
-            <h4 className="text-[11px] font-black uppercase tracking-widest text-white">Resources</h4>
-            <ul className="space-y-4 text-[11px] font-black text-zinc-500 uppercase italic">
-              <li><button onClick={() => setView('legal')} className="hover:text-white">Security Policy</button></li>
-              <li><button onClick={() => window.open('https://bgremoverai.online', '_blank')} className="text-zinc-400 hover:text-white underline">Bg Remover (Free Tool)</button></li>
-              <li className="text-zinc-700">API Documentation</li>
+
+          <div className="md:col-span-2 space-y-8">
+            <h5 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Security</h5>
+            <ul className="space-y-4 text-[11px] font-black uppercase text-zinc-600 italic">
+              <li className="hover:text-white cursor-pointer" onClick={() => setShowLegal(true)}>Privacy Protocol</li>
+              <li className="hover:text-white cursor-pointer" onClick={() => setShowLegal(true)}>Terms of Access</li>
             </ul>
           </div>
-          <div className="flex flex-col items-end gap-6">
-            <div className="flex items-center gap-4 bg-zinc-900 px-6 py-3 rounded-2xl border border-zinc-800">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_green]" />
-              <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Global Server Online</span>
+
+          <div className="md:col-span-4 flex flex-col items-end justify-between">
+            <div className="bg-zinc-900 p-6 rounded-3xl border border-zinc-800 w-full md:w-auto">
+              <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-4">Network Status</p>
+              <div className="flex items-center gap-4">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-xs font-bold text-white uppercase tracking-tighter">ALL SYSTEMS OPERATIONAL</span>
+              </div>
             </div>
-            <p className="text-[10px] font-black text-zinc-800 uppercase tracking-[0.5em] text-right">
-              2026 © CINEWISE DECENTRALIZED <br />
-              POWERED BY TMDB ENGINE
+            <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.5em] mt-10">
+              © 2026 CINEWISE DECENTRALIZED NETWORK
             </p>
           </div>
         </div>
       </footer>
 
-      {/* Feature Components */}
-      {prank && <GhostFacePrank onClose={() => setPrank(false)} />}
-      {roulette && <SpoilerRoulette onClose={() => setRoulette(false)} />}
-      {vibe && <VibeMatcher onClose={() => setVibe(false)} />}
+      {/* --- MODALS & OVERLAYS --- */}
       <MovieDetailModal movie={selected} onClose={() => setSelected(null)} />
+      
+      {showLegal && (
+        <div className="fixed inset-0 z-[600] bg-black p-10 md:p-40 overflow-y-auto animate-in slide-in-from-top duration-500">
+          <div className="max-w-4xl mx-auto space-y-20">
+            <h2 className="text-9xl font-black italic uppercase tracking-tighter">Legal</h2>
+            <div className="space-y-12 border-l-2 border-red-600 pl-10">
+              <p className="text-2xl text-zinc-500 font-light italic">
+                CINEWISE is a 2026 cinematic metadata provider. We do not store user data or cookies. 
+                Background removal services are recommended via <span className="text-white">bgremoverai.online</span> for privacy-conscious users.
+              </p>
+              <button onClick={() => setShowLegal(false)} className="bg-white text-black px-10 py-4 font-black uppercase text-[10px] tracking-widest">Back to Console</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
