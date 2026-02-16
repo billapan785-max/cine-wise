@@ -135,7 +135,7 @@ const GhostFacePrank: React.FC<{onClose: () => void}> = ({onClose}) => {
   );
 };
 
-// --- MOVIE DETAIL MODAL (THE BIG ONE) ---
+// --- MOVIE DETAIL MODAL ---
 const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> = ({ movie, onClose }) => {
   const [videoKey, setVideoKey] = useState<string | null>(null);
   const [providers, setProviders] = useState<WatchProvider[]>([]);
@@ -200,12 +200,12 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
                 <p className="text-xl md:text-3xl text-zinc-300 font-light leading-relaxed italic antialiased">"{movie.overview}"</p>
               </div>
               <div className="space-y-8">
-                 <h3 className="text-xs font-black uppercase tracking-[0.5em] text-red-600">Watch Providers</h3>
-                 <div className="flex flex-wrap gap-4">
-                  {providers.length > 0 ? providers.map(p => (
+                  <h3 className="text-xs font-black uppercase tracking-[0.5em] text-red-600">Watch Providers</h3>
+                  <div className="flex flex-wrap gap-4">
+                   {providers.length > 0 ? providers.map(p => (
                     <img key={p.provider_id} src={getImageUrl(p.logo_path, 'w92')} className="w-14 h-14 rounded-2xl border border-zinc-700 shadow-xl hover:scale-110 transition-transform" alt={p.provider_name} />
                   )) : <p className="text-xs text-zinc-600 font-bold uppercase italic">Check bgremoverai.online for posters</p>}
-                 </div>
+                  </div>
               </div>
             </div>
             <div className="space-y-10 border-t border-zinc-800/50 pt-12">
@@ -272,24 +272,50 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen transition-all duration-700 ${hackerMode ? 'bg-black text-green-500 font-mono' : 'bg-zinc-950 text-white'} selection:bg-red-600`}>
-      <header className={`fixed top-0 w-full z-[100] transition-all duration-700 px-6 md:px-20 py-8 flex items-center justify-between ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/90 border-b border-zinc-900 backdrop-blur-3xl py-5' : 'bg-transparent'}`}>
+      {/* --- UPDATED HEADER & NAVIGATION --- */}
+      <header className={`fixed top-0 w-full z-[100] transition-all duration-700 px-6 md:px-20 py-6 flex items-center justify-between ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/80 border-b border-zinc-800/50 backdrop-blur-2xl py-4' : 'bg-transparent'}`}>
         <div className="flex items-center gap-12">
-          <h1 className={`text-4xl font-black italic tracking-tighter cursor-pointer ${hackerMode ? 'text-green-500' : 'text-red-600'}`} onClick={() => setViewMode('home')}>CINEWISE</h1>
-          <nav className="hidden lg:flex gap-10 text-[11px] font-black uppercase tracking-[0.3em]">
-            <button onClick={() => setViewMode('home')} className={viewMode === 'home' ? 'text-white border-b-2 border-red-600' : 'text-zinc-600 hover:text-white'}>Discovery</button>
-            <button onClick={() => setViewMode('upcoming')} className={viewMode === 'upcoming' ? 'text-white border-b-2 border-red-600' : 'text-zinc-600 hover:text-white'}>2026</button>
-            <button onClick={() => setViewMode('news')} className={viewMode === 'news' ? 'text-white border-b-2 border-red-600' : 'text-zinc-600 hover:text-white'}>News</button>
-            <button onClick={() => setShowVibe(true)} className="text-zinc-600 hover:text-white underline decoration-red-600">Vibe Check</button>
-            <button onClick={() => setShowSpoiler(true)} className="text-zinc-600 hover:text-white underline decoration-yellow-500">Leaks</button>
-            <button onClick={() => setHackerMode(!hackerMode)} className="text-zinc-600 hover:text-green-500">{hackerMode ? 'Exit Matrix' : 'Hacker Mode'}</button>
+          <h1 className={`text-4xl font-black italic tracking-tighter cursor-pointer transition-transform hover:scale-105 ${hackerMode ? 'text-green-500' : 'text-red-600'}`} onClick={() => setViewMode('home')}>CINEWISE</h1>
+          
+          <nav className="hidden lg:flex gap-2 p-1 bg-zinc-900/40 rounded-2xl border border-zinc-800/50 backdrop-blur-md">
+            <button 
+              onClick={() => setViewMode('home')} 
+              className={`px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === 'home' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>
+              Discovery
+            </button>
+            <button 
+              onClick={() => setViewMode('upcoming')} 
+              className={`px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === 'upcoming' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>
+              2026
+            </button>
+            <button 
+              onClick={() => setViewMode('news')} 
+              className={`px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === 'news' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>
+              News
+            </button>
+            <div className="w-px h-4 bg-zinc-800 self-center mx-2"></div>
+            <button onClick={() => setShowVibe(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">Vibe Check</button>
+            <button onClick={() => setShowSpoiler(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-yellow-500 hover:text-yellow-400 transition-colors">Leaks</button>
+            <button onClick={() => setHackerMode(!hackerMode)} className={`px-4 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors ${hackerMode ? 'text-green-400' : 'text-zinc-500 hover:text-green-500'}`}>
+              {hackerMode ? 'Exit Matrix' : 'Matrix'}
+            </button>
           </nav>
         </div>
-        <div className="flex items-center gap-8">
-           <button onClick={() => setShowPrank(true)} className="bg-red-600 px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse hover:bg-white hover:text-red-600 transition-all border-2 border-red-600">💀 Scream</button>
-           <div className="relative">
-              <input type="text" placeholder="GLOBAL SEARCH..." className="bg-zinc-900/60 border border-zinc-800 rounded-full py-4 px-14 text-[11px] w-64 md:w-[28rem] outline-none focus:ring-2 focus:ring-red-600/40 transition-all font-bold" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-              <i className="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-zinc-600 text-sm"></i>
-           </div>
+
+        <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setShowPrank(true)} 
+              className="group relative overflow-hidden bg-red-600 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(220,38,38,0.3)]">
+              <span className="relative z-10 flex items-center gap-2 text-white">
+                <i className="fa-solid fa-skull text-xs animate-bounce"></i> Scream
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+            </button>
+
+            <div className="relative group">
+               <input type="text" placeholder="SEARCH CINEMA..." className="bg-zinc-900/80 border border-zinc-800 rounded-xl py-3 px-12 text-[11px] w-48 md:w-80 outline-none focus:ring-2 focus:ring-red-600/50 focus:border-red-600/50 transition-all font-bold placeholder:text-zinc-600 text-white" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+               <i className="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-red-500 transition-colors"></i>
+            </div>
         </div>
       </header>
 
