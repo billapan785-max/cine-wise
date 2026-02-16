@@ -34,34 +34,37 @@ const getImageUrl = (path: string, size: 'w92' | 'w185' | 'w500' | 'original' = 
   return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
 };
 
-// --- VIRAL FEATURE 1: SPOILER ROULETTE ---
+// --- VIRAL FEATURE 1: SPOILER ROULETTE (EXPANDED) ---
 const SpoilerRoulette: React.FC<{onClose: () => void}> = ({onClose}) => {
   const [spoiler, setSpoiler] = useState('');
   const [isSpinning, setIsSpinning] = useState(false);
   const leaks = [
-    "SCREAM 7: The killer is actually a fan of the original 'Stab' movies working in the police.",
+    "SCREAM 7: The killer is actually a fan of the original 'Stab' movies working in the police force.",
     "AVATAR 3: Varang, the leader of the Ash People, will survive until the 5th movie.",
-    "SPIDER-MAN 4: Miles Morales will make a 5-second cameo in the post-credits.",
-    "JOKER 2: The ending features a massive musical number inside a burning hospital."
+    "SPIDER-MAN 4: Miles Morales will make a 5-second cameo in the post-credits scene.",
+    "JOKER 2: The ending features a massive musical number inside a burning hospital.",
+    "BEYOND THE SPIDER-VERSE: Production has moved to a new proprietary AI rendering engine for 2026."
   ];
   const spin = () => {
     setIsSpinning(true);
     setTimeout(() => {
       setSpoiler(leaks[Math.floor(Math.random() * leaks.length)]);
       setIsSpinning(false);
-    }, 800);
+    }, 1200);
   };
   return (
-    <div className="fixed inset-0 z-[500] bg-black/98 backdrop-blur-3xl flex items-center justify-center p-6">
-      <div className="w-full max-w-xl bg-zinc-900 border-2 border-yellow-500 rounded-[3rem] p-12 text-center space-y-8 shadow-[0_0_80px_rgba(234,179,8,0.2)]">
-        <h3 className="text-4xl font-black italic text-yellow-500 uppercase tracking-tighter">Spoiler Terminal</h3>
-        <div className="py-10 border-y border-zinc-800">
-          <p className={`text-xl font-bold italic transition-all ${isSpinning ? 'opacity-20 blur-sm' : 'opacity-100'}`}>
-            {spoiler || "Ready to see 2026 leaks?"}
+    <div className="fixed inset-0 z-[600] bg-black/98 backdrop-blur-3xl flex items-center justify-center p-6 animate-in fade-in duration-500">
+      <div className="w-full max-w-xl bg-zinc-900 border-2 border-yellow-500 rounded-[3.5rem] p-12 text-center space-y-10 shadow-[0_0_100px_rgba(234,179,8,0.15)]">
+        <h3 className="text-5xl font-black italic text-yellow-500 uppercase tracking-tighter">Spoiler Terminal</h3>
+        <div className="py-12 border-y border-zinc-800">
+          <p className={`text-2xl font-bold italic transition-all duration-500 ${isSpinning ? 'opacity-20 blur-xl scale-90' : 'opacity-100 text-white'}`}>
+            {spoiler || "Ready to access encrypted 2026 production leaks?"}
           </p>
         </div>
-        <button onClick={spin} className="w-full bg-yellow-500 text-black font-black py-6 rounded-2xl hover:scale-105 transition-all uppercase tracking-widest text-sm">Spin for Leaks</button>
-        <button onClick={onClose} className="text-zinc-500 uppercase font-bold text-[10px] tracking-[0.3em]">Exit Restricted Area</button>
+        <div className="space-y-4">
+          <button onClick={spin} className="w-full bg-yellow-500 text-black font-black py-7 rounded-[2rem] hover:scale-105 transition-all uppercase tracking-widest text-sm shadow-2xl">Initialize Decryption</button>
+          <button onClick={onClose} className="text-zinc-600 uppercase font-black text-[10px] tracking-[0.4em] hover:text-white transition-colors">Abort Access</button>
+        </div>
       </div>
     </div>
   );
@@ -70,28 +73,31 @@ const SpoilerRoulette: React.FC<{onClose: () => void}> = ({onClose}) => {
 // --- VIRAL FEATURE 2: VIBE MATCHER ---
 const VibeMatcher: React.FC<{onClose: () => void}> = ({onClose}) => {
   const moods = [
-    { name: 'Villain Era', movie: 'The Joker' },
-    { name: 'Lonely God', movie: 'Blade Runner 2049' },
-    { name: 'Main Character', movie: 'The Great Gatsby' },
-    { name: 'Lost in Space', movie: 'Interstellar' }
+    { name: 'Villain Era', desc: 'Powerful, dark, and misunderstood.' },
+    { name: 'Lonely God', desc: 'Melancholic excellence in solitude.' },
+    { name: 'Main Character', desc: 'The world revolves around you.' },
+    { name: 'Cyberpunk Soul', desc: 'High tech, low life, neon dreams.' }
   ];
-  const [match, setMatch] = useState('');
+  const [match, setMatch] = useState<{name: string, desc: string} | null>(null);
   return (
-    <div className="fixed inset-0 z-[500] bg-zinc-950/98 flex items-center justify-center p-6">
-      <div className="w-full max-w-2xl bg-white rounded-[4rem] p-16 text-black space-y-12">
-        <h3 className="text-5xl font-black italic uppercase tracking-tighter">Vibe Check</h3>
+    <div className="fixed inset-0 z-[600] bg-zinc-950/98 flex items-center justify-center p-6 backdrop-blur-md">
+      <div className="w-full max-w-2xl bg-white rounded-[4rem] p-16 text-black space-y-12 shadow-[0_0_120px_rgba(255,255,255,0.1)]">
+        <h3 className="text-6xl font-black italic uppercase tracking-tighter">Vibe Check</h3>
         <div className="grid grid-cols-2 gap-6">
           {moods.map(m => (
-            <button key={m.name} onClick={() => setMatch(m.movie)} className="border-4 border-black py-6 rounded-3xl font-black uppercase text-sm hover:bg-black hover:text-white transition-all">{m.name}</button>
+            <button key={m.name} onClick={() => setMatch(m)} className="border-4 border-black py-8 rounded-[2.5rem] font-black uppercase text-xs hover:bg-black hover:text-white transition-all transform hover:-translate-y-1">
+              {m.name}
+            </button>
           ))}
         </div>
         {match && (
-          <div className="bg-zinc-100 p-10 rounded-[2.5rem] text-center animate-in zoom-in duration-500">
-            <p className="text-xs font-black uppercase tracking-widest mb-4 opacity-40">Your Movie Soulmate</p>
-            <p className="text-4xl font-black italic uppercase text-red-600 tracking-tighter">{match}</p>
+          <div className="bg-zinc-100 p-12 rounded-[3rem] text-center animate-in zoom-in slide-in-from-bottom-5 duration-500 border-2 border-black/5">
+            <p className="text-[10px] font-black uppercase tracking-widest mb-4 opacity-40">Your Movie Persona</p>
+            <p className="text-5xl font-black italic uppercase text-red-600 tracking-tighter mb-4">{match.name}</p>
+            <p className="text-sm font-bold text-zinc-500 italic uppercase">{match.desc}</p>
           </div>
         )}
-        <button onClick={onClose} className="w-full text-center text-[10px] font-black uppercase tracking-[0.5em] opacity-30">Back to Database</button>
+        <button onClick={onClose} className="w-full text-center text-[10px] font-black uppercase tracking-[0.5em] opacity-30 hover:opacity-100 transition-opacity">Return to Database</button>
       </div>
     </div>
   );
@@ -109,26 +115,28 @@ const GhostFacePrank: React.FC<{onClose: () => void}> = ({onClose}) => {
     setTimeout(() => {
       ringtone.pause();
       setStatus('talking');
-      const msg = new SpeechSynthesisUtterance();
-      msg.text = `Hello... ${victimName}... I am watching you from movie box dot shop. Do you like scary movies?`;
-      msg.pitch = 0.1; msg.rate = 0.7;
+      const msg = new SpeechSynthesisUtterance(`Hello... ${victimName}... I am watching you from cine wise dot shop. Do you like scary movies?`);
+      msg.pitch = 0.1; msg.rate = 0.6;
       window.speechSynthesis.speak(msg);
       msg.onend = () => { setStatus('idle'); };
-    }, 4000);
+    }, 4500);
   };
   return (
-    <div className="fixed inset-0 z-[500] bg-black/95 flex items-center justify-center p-6 backdrop-blur-md">
-      <div className="w-full max-w-xl bg-zinc-950 border-2 border-red-600 rounded-[3.5rem] p-12 relative shadow-[0_0_100px_rgba(220,38,38,0.4)]">
-        <button onClick={onClose} className="absolute top-10 right-10 text-zinc-600 hover:text-white text-2xl transition-all">✕</button>
-        <div className="text-center space-y-10">
-          <h3 className="text-5xl font-black italic text-red-600 uppercase tracking-tighter">Scream Terminal</h3>
+    <div className="fixed inset-0 z-[600] bg-black/95 flex items-center justify-center p-6 backdrop-blur-xl">
+      <div className="w-full max-w-xl bg-zinc-950 border-2 border-red-600 rounded-[4rem] p-12 relative shadow-[0_0_150px_rgba(220,38,38,0.3)]">
+        <button onClick={onClose} className="absolute top-12 right-12 text-zinc-600 hover:text-white text-3xl transition-all">✕</button>
+        <div className="text-center space-y-12">
+          <div className="space-y-4">
+             <h3 className="text-6xl font-black italic text-red-600 uppercase tracking-tighter">Scream Node</h3>
+             <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em]">Global Voice Simulation Active</p>
+          </div>
           <div className="space-y-6">
-            <input type="text" placeholder="VICTIM NAME" className="w-full bg-zinc-900/50 border border-zinc-800 rounded-3xl py-6 px-10 text-white text-center text-xl outline-none focus:border-red-600 font-bold" value={victimName} onChange={(e) => setVictimName(e.target.value)} />
-            <button onClick={startPrank} disabled={status !== 'idle'} className="w-full bg-red-600 text-white font-black py-8 rounded-3xl hover:scale-105 transition-all shadow-xl uppercase tracking-widest">
-              {status === 'idle' ? 'Establish Call' : status === 'ringing' ? '📞 RINGING...' : '🔪 CONNECTED...'}
+            <input type="text" placeholder="ENTER VICTIM NAME" className="w-full bg-zinc-900/50 border-2 border-zinc-800 rounded-3xl py-8 px-10 text-white text-center text-2xl outline-none focus:border-red-600 font-black transition-all placeholder:text-zinc-700" value={victimName} onChange={(e) => setVictimName(e.target.value)} />
+            <button onClick={startPrank} disabled={status !== 'idle'} className="w-full bg-red-600 text-white font-black py-10 rounded-[2.5rem] hover:scale-105 transition-all shadow-2xl uppercase tracking-[0.2em] text-sm">
+              {status === 'idle' ? 'Establish Connection' : status === 'ringing' ? '📞 RINGING...' : '🔪 CONNECTED...'}
             </button>
           </div>
-          <p className="text-[10px] text-zinc-700 uppercase font-black tracking-widest">Authorized use only. Global USA Node.</p>
+          <p className="text-[10px] text-zinc-800 uppercase font-black tracking-widest leading-relaxed">Authorized use only. Data encrypted via US-WEST-2 Node.</p>
         </div>
       </div>
     </div>
@@ -163,10 +171,10 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
   if (!movie) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] bg-zinc-950/98 backdrop-blur-3xl overflow-y-auto pt-24 pb-10 px-4 animate-in fade-in duration-700">
+    <div className="fixed inset-0 z-[200] bg-zinc-950/98 backdrop-blur-3xl overflow-y-auto pt-24 pb-10 px-4 animate-in fade-in zoom-in duration-500">
       <div className="absolute inset-0 -z-10" onClick={onClose}></div>
-      <div className="relative w-full max-w-6xl mx-auto bg-zinc-900 rounded-[3.5rem] overflow-hidden border border-zinc-800">
-        <button onClick={onClose} className="absolute top-10 right-10 z-[220] bg-black/60 hover:bg-red-600 w-14 h-14 rounded-full flex items-center justify-center text-white transition-all shadow-2xl hover:rotate-90">
+      <div className="relative w-full max-w-6xl mx-auto bg-zinc-900 rounded-[4rem] overflow-hidden border border-zinc-800 shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+        <button onClick={onClose} className="absolute top-10 right-10 z-[220] bg-black/60 hover:bg-red-600 w-16 h-16 rounded-full flex items-center justify-center text-white transition-all shadow-2xl hover:rotate-90">
           <i className="fa-solid fa-xmark text-2xl"></i>
         </button>
         <div className="flex flex-col">
@@ -175,50 +183,50 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
               <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${videoKey}?autoplay=1&rel=0`} title={movie.title} frameBorder="0" allow="autoplay; encrypted-media" allowFullScreen></iframe>
             ) : (
               <div className="relative w-full h-full overflow-hidden">
-                <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover opacity-50 group-hover:scale-110 transition-transform duration-[4000ms] ease-out" alt={movie.title} />
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-6">
-                  <div className="w-24 h-24 bg-red-600 rounded-full flex items-center justify-center animate-pulse shadow-[0_0_60px_rgba(220,38,38,0.5)]">
-                     <i className="fa-solid fa-play text-3xl text-white ml-2"></i>
+                <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover opacity-50 group-hover:scale-110 transition-transform duration-[5000ms] ease-out" alt={movie.title} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-8">
+                  <div className="w-28 h-28 bg-red-600 rounded-full flex items-center justify-center animate-pulse shadow-[0_0_80px_rgba(220,38,38,0.6)]">
+                     <i className="fa-solid fa-play text-4xl text-white ml-2"></i>
                   </div>
-                  <button onClick={() => setShowPlayer(true)} className="bg-white text-black px-12 py-5 rounded-2xl flex items-center gap-4 hover:bg-red-600 hover:text-white transition-all font-black text-xl tracking-tighter uppercase">Launch Official Trailer</button>
+                  <button onClick={() => setShowPlayer(true)} className="bg-white text-black px-16 py-6 rounded-2xl flex items-center gap-6 hover:bg-red-600 hover:text-white transition-all font-black text-2xl tracking-tighter uppercase transform hover:scale-110">Watch Trailer</button>
                 </div>
               </div>
             )}
           </div>
-          <div className="p-10 md:p-20 space-y-16">
-            <div className="space-y-6">
-              <h2 className="text-5xl md:text-8xl font-black uppercase italic tracking-tighter leading-none text-white drop-shadow-2xl">{movie.title}</h2>
-              <div className="flex flex-wrap gap-6 text-sm font-bold items-center">
-                <span className="text-green-500 bg-green-500/10 px-4 py-2 rounded-xl border border-green-500/20">{Math.round(movie.vote_average * 10)}% Score</span>
-                <span className="text-zinc-400 bg-zinc-800/50 px-4 py-2 rounded-xl border border-zinc-700/50 uppercase tracking-widest">{movie.release_date}</span>
-                <span className="text-red-500 font-black tracking-widest border-l border-zinc-800 pl-6 uppercase">Exclusive Access</span>
+          <div className="p-10 md:p-24 space-y-20">
+            <div className="space-y-8">
+              <h2 className="text-6xl md:text-[9rem] font-black uppercase italic tracking-tighter leading-[0.8] text-white drop-shadow-2xl">{movie.title}</h2>
+              <div className="flex flex-wrap gap-8 text-sm font-bold items-center">
+                <span className="text-green-500 bg-green-500/10 px-6 py-3 rounded-2xl border border-green-500/20 shadow-xl">{Math.round(movie.vote_average * 10)}% Vibe Score</span>
+                <span className="text-zinc-400 bg-zinc-800/50 px-6 py-3 rounded-2xl border border-zinc-700/50 uppercase tracking-widest">{movie.release_date}</span>
+                <span className="text-red-500 font-black tracking-[0.3em] border-l border-zinc-800 pl-8 uppercase">Premium Access</span>
               </div>
             </div>
-            <div className="grid md:grid-cols-3 gap-12 border-t border-zinc-800/50 pt-12">
-              <div className="md:col-span-2 space-y-8">
-                <h3 className="text-xs font-black uppercase tracking-[0.5em] text-zinc-500">The Storyline</h3>
-                <p className="text-xl md:text-3xl text-zinc-300 font-light leading-relaxed italic antialiased">"{movie.overview}"</p>
+            <div className="grid md:grid-cols-3 gap-16 border-t border-zinc-800/50 pt-16">
+              <div className="md:col-span-2 space-y-10">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.6em] text-zinc-600">The Intelligence Brief</h3>
+                <p className="text-2xl md:text-4xl text-zinc-300 font-light leading-relaxed italic antialiased tracking-tight">"{movie.overview}"</p>
               </div>
-              <div className="space-y-8">
-                  <h3 className="text-xs font-black uppercase tracking-[0.5em] text-red-600">Watch Providers</h3>
-                  <div className="flex flex-wrap gap-4">
+              <div className="space-y-10">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.6em] text-red-600">Node Availability</h3>
+                  <div className="flex flex-wrap gap-6">
                    {providers.length > 0 ? providers.map(p => (
-                    <img key={p.provider_id} src={getImageUrl(p.logo_path, 'w92')} className="w-14 h-14 rounded-2xl border border-zinc-700 shadow-xl hover:scale-110 transition-transform" alt={p.provider_name} />
-                  )) : <p className="text-xs text-zinc-600 font-bold uppercase italic">Check bgremoverai.online for posters</p>}
+                    <img key={p.provider_id} src={getImageUrl(p.logo_path, 'w92')} className="w-16 h-16 rounded-[1.5rem] border border-zinc-700 shadow-2xl hover:scale-110 transition-transform" alt={p.provider_name} />
+                  )) : <p className="text-[10px] text-zinc-700 font-bold uppercase italic tracking-widest">No Active Streams Found</p>}
                   </div>
               </div>
             </div>
-            <div className="space-y-10 border-t border-zinc-800/50 pt-12">
-              <h3 className="text-xs font-black uppercase tracking-[0.6em] text-zinc-500 flex items-center gap-8">Main Production Cast <span className="h-px flex-1 bg-zinc-800"></span></h3>
-              <div className="flex gap-10 overflow-x-auto pb-8 scrollbar-hide snap-x">
+            <div className="space-y-12 border-t border-zinc-800/50 pt-16">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.7em] text-zinc-600 flex items-center gap-10">Principal Cast Production <span className="h-px flex-1 bg-zinc-900"></span></h3>
+              <div className="flex gap-12 overflow-x-auto pb-10 scrollbar-hide snap-x">
                 {cast.map(person => (
-                  <div key={person.id} className="flex-shrink-0 w-32 md:w-44 text-center space-y-5 group/actor snap-center">
-                    <div className="relative overflow-hidden rounded-full aspect-square border-4 border-zinc-800 group-hover/actor:border-red-600 transition-all duration-500 shadow-2xl">
-                       <img src={getImageUrl(person.profile_path, 'w185')} className="w-full h-full object-cover group-hover/actor:scale-125 transition-transform duration-700" alt={person.name} />
+                  <div key={person.id} className="flex-shrink-0 w-40 md:w-52 text-center space-y-6 group/actor snap-center">
+                    <div className="relative overflow-hidden rounded-full aspect-square border-4 border-zinc-800 group-hover/actor:border-red-600 transition-all duration-700 shadow-3xl">
+                       <img src={getImageUrl(person.profile_path, 'w185')} className="w-full h-full object-cover group-hover/actor:scale-125 transition-transform duration-[1500ms]" alt={person.name} />
                     </div>
                     <div>
-                      <p className="text-[12px] font-black uppercase text-white leading-tight tracking-tighter">{person.name}</p>
-                      <p className="text-[10px] text-zinc-500 uppercase italic tracking-tighter mt-1">{person.character}</p>
+                      <p className="text-sm font-black uppercase text-white leading-tight tracking-tighter">{person.name}</p>
+                      <p className="text-[10px] text-zinc-600 uppercase italic tracking-tighter mt-2">{person.character}</p>
                     </div>
                   </div>
                 ))}
@@ -231,27 +239,61 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
   );
 };
 
+// --- LEGAL COMPONENT (PRIVACY & TERMS CONTENT) ---
+const LegalTerminal: React.FC<{onClose: () => void}> = ({onClose}) => (
+  <div className="fixed inset-0 z-[700] bg-zinc-950 overflow-y-auto animate-in fade-in duration-700">
+    <div className="max-w-4xl mx-auto px-6 py-32 space-y-24">
+       <div className="space-y-6 text-center">
+          <h2 className="text-7xl md:text-[10rem] font-black italic uppercase tracking-tighter text-white">LEGAL</h2>
+          <p className="text-red-600 font-black tracking-[0.5em] uppercase text-xs">Protocol v2.026 // Fully Anonymous</p>
+       </div>
+
+       <div className="space-y-20">
+          <section className="space-y-8">
+             <h3 className="text-2xl font-black uppercase tracking-[0.2em] text-white border-l-8 border-red-600 pl-8">Privacy Policy</h3>
+             <div className="text-zinc-500 font-bold leading-loose text-sm md:text-lg space-y-6 italic">
+                <p>CINEWISE operates on a strictly decentralized data principle. We do not maintain user databases, we do not require email harvesting (logins), and we do not track your digital footprint across nodes.</p>
+                <p>All movie metadata is fetched in real-time via TMDB API. Your search history is temporary and cleared upon session termination. For image processing needs, we recommend <span className="text-white underline">bgremoverai.online</span> as it shares our commitment to "Free & No-Login" utility.</p>
+             </div>
+          </section>
+
+          <section className="space-y-8">
+             <h3 className="text-2xl font-black uppercase tracking-[0.2em] text-white border-l-8 border-red-600 pl-8">Terms of Service</h3>
+             <div className="text-zinc-500 font-bold leading-loose text-sm md:text-lg space-y-6 italic">
+                <p>1. <span className="text-white">Content Rights:</span> We do not host video files. All promotional material belongs to the respective studios and TMDB.</p>
+                <p>2. <span className="text-white">User Conduct:</span> The 'Scream Prank' is an experimental voice-synthesis tool. By using it, you agree not to harass or impersonate for malicious intent.</p>
+                <p>3. <span className="text-white">No Liability:</span> 2026 Node is provided "as is". Use at your own discretion.</p>
+             </div>
+          </section>
+       </div>
+
+       <div className="text-center pt-10">
+          <button onClick={onClose} className="bg-white text-black font-black px-16 py-6 rounded-2xl hover:bg-red-600 hover:text-white transition-all text-xs uppercase tracking-widest">Acknowledge Protocol</button>
+       </div>
+    </div>
+  </div>
+);
+
 // --- MAIN APPLICATION LOGIC ---
 const App: React.FC = () => {
-  const [viewMode, setViewMode] = useState<'home' | 'news' | 'upcoming' | 'disclaimer'>('home');
+  const [viewMode, setViewMode] = useState<'home' | 'news' | 'upcoming' | 'legal'>('home');
   const [movies, setMovies] = useState<Movie[]>([]);
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   
-  // States for Viral Features
   const [showPrank, setShowPrank] = useState(false);
   const [showSpoiler, setShowSpoiler] = useState(false);
   const [showVibe, setShowVibe] = useState(false);
   const [hackerMode, setHackerMode] = useState(false);
 
   const calculateCountdown = (date: string) => {
-    if (!date) return 'Coming Soon';
+    if (!date) return 'TBA';
     const diff = +new Date(date) - +new Date();
-    if (diff <= 0) return "Global Release";
+    if (diff <= 0) return "Out Now";
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    return `${days} Days Left`;
+    return `${days}D Left`;
   };
 
   const fetchData = useCallback(async (targetPage: number) => {
@@ -267,7 +309,7 @@ const App: React.FC = () => {
     const data = await res.json();
     let results = data.results || [];
 
-    // STRICT FILTER FOR UPCOMING SECTION (ONLY FUTURE DATES)
+    // STRICT FILTER: Only Future Release Dates for Upcoming Section
     if (viewMode === 'upcoming') {
       const today = new Date().toISOString().split('T')[0];
       results = results.filter((m: Movie) => m.release_date > today);
@@ -285,118 +327,119 @@ const App: React.FC = () => {
   }, [fetchData]);
 
   return (
-    <div className={`min-h-screen transition-all duration-700 ${hackerMode ? 'bg-black text-green-500 font-mono' : 'bg-zinc-950 text-white'} selection:bg-red-600`}>
-      <header className={`fixed top-0 w-full z-[100] transition-all duration-700 px-6 md:px-20 py-6 flex items-center justify-between ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/80 border-b border-zinc-800/50 backdrop-blur-2xl py-4' : 'bg-transparent'}`}>
-        <div className="flex items-center gap-12">
-          <h1 className={`text-4xl font-black italic tracking-tighter cursor-pointer transition-transform hover:scale-105 ${hackerMode ? 'text-green-500' : 'text-red-600'}`} onClick={() => setViewMode('home')}>CINEWISE</h1>
+    <div className={`min-h-screen transition-all duration-1000 ${hackerMode ? 'bg-black text-green-500 font-mono' : 'bg-zinc-950 text-white'} selection:bg-red-600`}>
+      <header className={`fixed top-0 w-full z-[100] transition-all duration-700 px-6 md:px-20 py-8 flex items-center justify-between ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/90 border-b border-zinc-800/50 backdrop-blur-3xl py-5' : 'bg-transparent'}`}>
+        <div className="flex items-center gap-16">
+          <h1 className={`text-5xl font-black italic tracking-tighter cursor-pointer transition-transform hover:scale-105 ${hackerMode ? 'text-green-500' : 'text-red-600'}`} onClick={() => setViewMode('home')}>CINEWISE</h1>
           
-          <nav className="hidden lg:flex gap-2 p-1 bg-zinc-900/40 rounded-2xl border border-zinc-800/50 backdrop-blur-md">
-            <button onClick={() => setViewMode('home')} className={`px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === 'home' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>Discovery</button>
-            <button onClick={() => setViewMode('upcoming')} className={`px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === 'upcoming' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>Upcoming</button>
-            <button onClick={() => setViewMode('news')} className={`px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === 'news' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>News</button>
-            <div className="w-px h-4 bg-zinc-800 self-center mx-2"></div>
-            <button onClick={() => setShowVibe(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white transition-colors">Vibe Check</button>
-            <button onClick={() => setShowSpoiler(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-yellow-500 hover:text-yellow-400 transition-colors">Leaks</button>
-            <button onClick={() => setHackerMode(!hackerMode)} className={`px-4 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors ${hackerMode ? 'text-green-400' : 'text-zinc-500 hover:text-green-500'}`}>{hackerMode ? 'Exit Matrix' : 'Matrix'}</button>
+          <nav className="hidden lg:flex gap-4 p-1.5 bg-zinc-900/50 rounded-2xl border border-zinc-800/50 backdrop-blur-md">
+            {['home', 'upcoming', 'news'].map((m) => (
+              <button key={m} onClick={() => setViewMode(m as any)} className={`px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === m ? 'bg-red-600 text-white shadow-2xl' : 'text-zinc-500 hover:text-white hover:bg-zinc-800'}`}>
+                {m === 'home' ? 'Discovery' : m}
+              </button>
+            ))}
+            <div className="w-px h-5 bg-zinc-800 self-center mx-2"></div>
+            <button onClick={() => setShowVibe(true)} className="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">Vibe</button>
+            <button onClick={() => setShowSpoiler(true)} className="px-5 py-3 text-[10px] font-black uppercase tracking-widest text-yellow-500 hover:text-yellow-400 transition-colors">Leaks</button>
+            <button onClick={() => setHackerMode(!hackerMode)} className={`px-5 py-3 text-[10px] font-black uppercase tracking-widest transition-colors ${hackerMode ? 'text-green-400' : 'text-zinc-600 hover:text-green-500'}`}>{hackerMode ? 'Exit' : 'Matrix'}</button>
           </nav>
         </div>
 
-        <div className="flex items-center gap-6">
-            <button onClick={() => setShowPrank(true)} className="group relative overflow-hidden bg-red-600 px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(220,38,38,0.3)]">
-              <span className="relative z-10 flex items-center gap-2 text-white"><i className="fa-solid fa-skull text-xs animate-bounce"></i> Scream</span>
+        <div className="flex items-center gap-8">
+            <button onClick={() => setShowPrank(true)} className="group relative overflow-hidden bg-red-600 px-10 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] transition-all hover:scale-105 active:scale-95 shadow-2xl">
+              <span className="relative z-10 flex items-center gap-3 text-white"><i className="fa-solid fa-skull text-xs animate-bounce"></i> Scream Mode</span>
             </button>
             <div className="relative group">
-               <input type="text" placeholder="SEARCH CINEMA..." className="bg-zinc-900/80 border border-zinc-800 rounded-xl py-3 px-12 text-[11px] w-48 md:w-80 outline-none focus:ring-2 focus:ring-red-600/50 font-bold placeholder:text-zinc-600 text-white" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-               <i className="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-zinc-500"></i>
+               <input type="text" placeholder="SEARCH FILMS..." className="bg-zinc-900/80 border-2 border-zinc-800 rounded-2xl py-3.5 px-14 text-[11px] w-56 md:w-96 outline-none focus:border-red-600/50 font-black placeholder:text-zinc-700 text-white transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+               <i className="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-zinc-600"></i>
             </div>
         </div>
       </header>
 
-      {viewMode === 'disclaimer' ? (
-        <div className="pt-48 px-6 max-w-6xl mx-auto min-h-screen space-y-10 text-center">
-          <h1 className="text-7xl md:text-[10rem] font-black italic text-white uppercase tracking-tighter">LEGAL</h1>
-          <button onClick={() => setViewMode('home')} className="bg-white text-black px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-widest">Return</button>
-        </div>
+      {viewMode === 'legal' ? (
+        <LegalTerminal onClose={() => setViewMode('home')} />
       ) : (
         <>
           {!searchQuery && viewMode === 'home' && movies[0] && (
             <section className="relative h-screen w-full flex items-center px-6 md:px-24 overflow-hidden">
-              <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover opacity-40 blur-[2px] scale-105" alt="Feature" />
-              <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/20 to-transparent"></div>
-              <div className="relative max-w-5xl space-y-10">
-                <span className="bg-red-600 text-[11px] font-black px-6 py-2 rounded-full tracking-[0.4em] uppercase">Breaking Update</span>
-                <h2 className={`text-7xl md:text-[10rem] font-black italic uppercase tracking-tighter leading-[0.85] ${hackerMode ? 'text-green-400' : 'text-white'}`}>{movies[0].title}</h2>
-                <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-16 py-6 rounded-[2rem] hover:bg-red-600 hover:text-white transition-all text-sm uppercase">Explore This Title</button>
+              <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover opacity-30 blur-[1px] scale-105" alt="Feature" />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent"></div>
+              <div className="relative max-w-6xl space-y-12 animate-in fade-in slide-in-from-left-10 duration-1000">
+                <span className="bg-red-600 text-[11px] font-black px-8 py-3 rounded-full tracking-[0.5em] uppercase shadow-2xl">Headline Discovery</span>
+                <h2 className={`text-8xl md:text-[12rem] font-black italic uppercase tracking-tighter leading-[0.8] drop-shadow-2xl ${hackerMode ? 'text-green-500' : 'text-white'}`}>{movies[0].title}</h2>
+                <div className="flex gap-6">
+                  <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-20 py-7 rounded-[2.5rem] hover:bg-red-600 hover:text-white transition-all text-sm uppercase tracking-widest shadow-2xl transform hover:scale-105">Initialize Metadata</button>
+                </div>
               </div>
             </section>
           )}
 
-          <main className="px-6 md:px-20 py-32 min-h-screen">
-            <h2 className="text-[12px] font-black uppercase tracking-[0.5em] text-zinc-700 mb-20 flex items-center gap-10">
-              {viewMode === 'home' ? 'Trending Discovery' : viewMode === 'upcoming' ? 'Unreleased Masterpieces' : 'Production Feeds'} <span className="h-px flex-1 bg-zinc-900/50"></span>
+          <main className="px-6 md:px-20 py-40 min-h-screen">
+            <h2 className="text-[13px] font-black uppercase tracking-[0.7em] text-zinc-800 mb-24 flex items-center gap-12">
+              {viewMode === 'home' ? 'Trending Discovery' : viewMode === 'upcoming' ? 'Future Release Node' : 'Latest Production Feed'} 
+              <span className="h-px flex-1 bg-zinc-900/50"></span>
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-16">
               {movies.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase())).map(m => (
                 <div key={m.id} onClick={() => setSelectedMovie(m)} className="group cursor-pointer">
-                  <div className={`aspect-[2/3] overflow-hidden rounded-[2.5rem] border-2 bg-zinc-900 relative shadow-2xl transition-all duration-500 ${hackerMode ? 'border-green-900' : 'border-zinc-900 group-hover:border-red-600/40'}`}>
-                    <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-90 group-hover:opacity-30" alt={m.title} />
-                    <div className="absolute inset-0 flex flex-col justify-end p-8 opacity-0 group-hover:opacity-100 transition-all translate-y-6 group-hover:translate-y-0 text-white">
-                      <p className="text-sm font-black uppercase italic leading-tight mb-3">{m.title}</p>
-                      <p className="text-[10px] text-red-500 font-bold tracking-[0.2em] uppercase">⏳ {calculateCountdown(m.release_date)}</p>
+                  <div className={`aspect-[2/3] overflow-hidden rounded-[3rem] border-2 bg-zinc-900 relative shadow-2xl transition-all duration-700 ${hackerMode ? 'border-green-900' : 'border-zinc-900 group-hover:border-red-600'}`}>
+                    <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-[1500ms] opacity-90 group-hover:opacity-40" alt={m.title} />
+                    <div className="absolute inset-0 flex flex-col justify-end p-10 opacity-0 group-hover:opacity-100 transition-all translate-y-10 group-hover:translate-y-0 text-white">
+                      <p className="text-lg font-black uppercase italic leading-tight mb-4">{m.title}</p>
+                      <p className="text-[10px] text-red-500 font-black tracking-[0.3em] uppercase">
+                        {viewMode === 'upcoming' ? calculateCountdown(m.release_date) : `SCORE: ${Math.round(m.vote_average * 10)}%`}
+                      </p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
             {!searchQuery && (
-              <div className="flex justify-center mt-32">
-                <button onClick={() => fetchData(page + 1)} className="bg-zinc-900 hover:bg-white hover:text-black border border-zinc-800 text-white font-black px-20 py-7 rounded-[2.5rem] transition-all text-xs tracking-[0.4em] uppercase">Load More Data</button>
+              <div className="flex justify-center mt-40">
+                <button onClick={() => fetchData(page + 1)} className="bg-zinc-900 hover:bg-white hover:text-black border-2 border-zinc-800 text-white font-black px-24 py-8 rounded-[3rem] transition-all text-xs tracking-[0.5em] uppercase shadow-3xl transform hover:scale-105">Synchronize More Data</button>
               </div>
             )}
           </main>
         </>
       )}
 
+      {/* --- RE-EXPANDED FULL FOOTER --- */}
+      <footer className="py-32 bg-zinc-950 border-t border-zinc-900 mt-20">
+        <div className="max-w-7xl mx-auto px-10 grid md:grid-cols-4 gap-24">
+          <div className="space-y-10">
+            <h3 className="text-4xl font-black italic tracking-tighter text-red-600">CINEWISE</h3>
+            <p className="text-xs font-bold text-zinc-600 leading-loose uppercase italic tracking-wider">The premier decentralized movie node for 2026. High-vibe discovery without the tracking. Experience cinema protocol in its purest form.</p>
+          </div>
+          <div className="space-y-8">
+            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">Navigation</h4>
+            <ul className="space-y-5 text-[11px] font-black text-zinc-500 uppercase italic">
+              <li><button onClick={() => setViewMode('home')} className="hover:text-red-600 transition-colors">Discovery Node</button></li>
+              <li><button onClick={() => setViewMode('upcoming')} className="hover:text-red-600 transition-colors">Future Releases</button></li>
+              <li><button onClick={() => setViewMode('news')} className="hover:text-red-600 transition-colors">Production News</button></li>
+            </ul>
+          </div>
+          <div className="space-y-8">
+            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">Legal Protocol</h4>
+            <ul className="space-y-5 text-[11px] font-black text-zinc-500 uppercase italic">
+              <li><button onClick={() => setViewMode('legal')} className="hover:text-white transition-colors">Privacy Node</button></li>
+              <li><button onClick={() => setViewMode('legal')} className="hover:text-white transition-colors">Terms of Access</button></li>
+              <li><button onClick={() => window.open('https://bgremoverai.online', '_blank')} className="text-zinc-400 hover:text-white underline underline-offset-8">Bg Remover (Free & No-Login)</button></li>
+            </ul>
+          </div>
+          <div className="space-y-8 text-right flex flex-col items-end">
+             <div className="flex items-center gap-4 bg-zinc-900/50 px-6 py-3 rounded-2xl border border-zinc-800">
+                <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(34,197,94,0.6)]"></div>
+                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Global Node: Active</span>
+             </div>
+             <p className={`text-[11px] font-black tracking-[0.6em] pt-10 ${hackerMode ? 'text-green-900' : 'text-zinc-800'}`}>CINEWISE PROTOCOL 2026 // NO LOGIN REQUIRED</p>
+          </div>
+        </div>
+      </footer>
+
       {showPrank && <GhostFacePrank onClose={() => setShowPrank(false)} />}
       {showVibe && <VibeMatcher onClose={() => setShowVibe(false)} />}
       {showSpoiler && <SpoilerRoulette onClose={() => setShowSpoiler(false)} />}
       <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
-
-      {/* FULL RESTORED FOOTER */}
-      <footer className="py-24 bg-zinc-950 border-t border-zinc-900 mt-20">
-        <div className="max-w-7xl mx-auto px-10 grid md:grid-cols-4 gap-20">
-          <div className="space-y-8">
-            <h3 className="text-3xl font-black italic tracking-tighter text-red-600">CINEWISE</h3>
-            <p className="text-xs font-bold text-zinc-500 leading-relaxed uppercase">The decentralized database for high-vibe cinema. Data node powered by TMDB.</p>
-          </div>
-          <div className="space-y-6">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Navigation</h4>
-            <ul className="space-y-4 text-xs font-bold text-zinc-600 uppercase italic">
-              <li><button onClick={() => setViewMode('home')} className="hover:text-red-600 transition-colors">Discovery</button></li>
-              <li><button onClick={() => setViewMode('upcoming')} className="hover:text-red-600 transition-colors">Upcoming</button></li>
-              <li><button onClick={() => setViewMode('news')} className="hover:text-red-600 transition-colors">News Feed</button></li>
-            </ul>
-          </div>
-          <div className="space-y-6">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Resources</h4>
-            <ul className="space-y-4 text-xs font-bold text-zinc-600 uppercase italic">
-              <li><button onClick={() => window.open('https://bgremoverai.online', '_blank')} className="hover:text-white transition-colors">Remove BG (Free)</button></li>
-              <li><button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600 transition-colors">Legal Terms</button></li>
-              <li><button className="hover:text-red-600 transition-colors">DMCA Report</button></li>
-            </ul>
-          </div>
-          <div className="space-y-6">
-            <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Status</h4>
-            <div className="flex items-center gap-3">
-               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-               <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Global Node Active</span>
-            </div>
-          </div>
-        </div>
-        <div className="mt-20 pt-10 border-t border-zinc-900 text-center">
-           <p className={`text-[10px] font-black tracking-[0.5em] ${hackerMode ? 'text-green-900' : 'text-zinc-800'}`}>CINEWISE 2026 // NO LOGIN REQUIRED // FREE FOREVER</p>
-        </div>
-      </footer>
     </div>
   );
 };
