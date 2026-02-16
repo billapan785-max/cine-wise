@@ -216,16 +216,12 @@ const calculateCountdown = (date: string) => {
               {displayedMovies.map(m => (
              <div key={m.id} onClick={() => handleOpenMovie(m)} className="relative group cursor-pointer transition-all hover:scale-105">
               <div className="aspect-[2/3] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-lg">
-                <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:opacity-20 transition-opacity" alt={m.title} />
-                <div className="absolute inset-0 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black">
-                  <div className="flex flex-col gap-0.5 text-left">
-                    <span className="text-[10px] font-black uppercase italic leading-none">{m.title}</span>
-                    <span className="text-[8px] text-red-500 font-bold tracking-widest uppercase">
-                      ⏳ {m.release_date ? calculateCountdown(m.release_date) : 'TBA 2026'}
-                    </span>
-                  </div>
+                <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:opacity-50 transition-opacity" alt={m.title} />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-white font-medium px-4 py-2 bg-black/50 rounded-full backdrop-blur-sm">View Details</span>
                 </div>
               </div>
+            </div>
             </div>
           ))}
            {/* LOAD MORE BUTTON START */}
