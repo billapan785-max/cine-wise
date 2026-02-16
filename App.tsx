@@ -35,6 +35,7 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
 
   useEffect(() => {
     if (movie) {
+      // Fetch Trailer
       fetch(`${TMDB_BASE_URL}/movie/${movie.id}/videos?api_key=${TMDB_API_KEY}`)
         .then(res => res.json())
         .then(data => {
@@ -42,6 +43,7 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
           setVideoKey(trailer ? trailer.key : null);
         });
 
+      // Fetch Watch Providers
       fetch(`${TMDB_BASE_URL}/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`)
         .then(res => res.json())
         .then(data => {
@@ -105,12 +107,33 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
 
 // --- MAIN APP ---
 const App: React.FC = () => {
-  const [viewMode, setViewMode] = useState<'home' | 'news' | 'disclaimer'>('home');
-  const [trending, setTrending] = useState<Movie[]>([]);
-  const [popular, setPopular] = useState<Movie[]>([]);
+  const [viewMode, setViewMode] = useState<'home' | 'news' | 'upcoming' | 'disclaimer'>('home');
+  const [movies, setMovies] = useState<Movie[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // SEO & URL Logic
+  const handleOpenMovie = (movie: Movie) => {
+    setSelectedMovie(movie);
+    const slug = movie.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+    window.history.pushState({ movieId: movie.id }, '', `/${slug}`);
+    document.title = `${movie.title} (2026) - Watch Trailers & News on CineWise`;
+    
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', `Get details for ${movie.title}. Release date: ${movie.release_date}. Overview: ${movie.overview.slice(0, 150)}...`);
+  };
+
+  const handleCloseMovie = () => {
+    setSelectedMovie(null);
+    window.history.pushState({}, '', '/');
+    document.title = 'CineWise - 2026 Trending Hollywood Updates';
+  };
 
   const calculateCountdown = (date: string) => {
     if (!date) return 'TBA 2026';
@@ -120,45 +143,27 @@ const App: React.FC = () => {
     return `${days} Days to Go`;
   };
 
-  const handleOpenMovie = (movie: Movie) => {
-    setSelectedMovie(movie);
-    const slug = movie.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
-    window.history.pushState({ movieId: movie.id }, '', `/${slug}`);
-    document.title = `${movie.title} (2026) - Watch Trailers & News on CineWise`;
-  };
-
-  const handleCloseMovie = () => {
-    setSelectedMovie(null);
-    window.history.pushState({}, '', '/');
-    document.title = 'CineWise - 2026 Trending Hollywood Updates';
-  };
-
-  const fetchData = useCallback(async (page: number = 1, type: 'trending' | 'popular' = 'trending') => {
-    const endpoint = type === 'trending' 
-      ? `${TMDB_BASE_URL}/trending/movie/day?api_key=${TMDB_API_KEY}&page=${page}`
-      : `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=${page}`;
+  const fetchData = useCallback(async (page: number = 1) => {
+    let endpoint = "";
+    if (viewMode === 'home') endpoint = `${TMDB_BASE_URL}/trending/movie/day?api_key=${TMDB_API_KEY}&page=${page}`;
+    else if (viewMode === 'news') endpoint = `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=${page}`;
+    else if (viewMode === 'upcoming') endpoint = `${TMDB_BASE_URL}/movie/upcoming?api_key=${TMDB_API_KEY}&page=${page}`;
     
     const res = await fetch(endpoint);
     const data = await res.json();
-    
-    if (type === 'trending') {
-      setTrending(prev => page === 1 ? data.results : [...prev, ...data.results]);
-    } else {
-      setPopular(prev => page === 1 ? data.results : [...prev, ...data.results]);
-    }
-  }, []);
+    setMovies(prev => page === 1 ? data.results : [...prev, ...data.results]);
+  }, [viewMode]);
 
   useEffect(() => {
-    fetchData(1, 'trending');
-    fetchData(1, 'popular');
+    fetchData(1);
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [fetchData]);
 
   const displayedMovies = searchQuery.length > 2 
-    ? [...trending, ...popular].filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    : viewMode === 'home' ? trending : popular;
+    ? movies.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    : movies;
 
   return (
     <div className={`min-h-screen bg-zinc-950 text-white ${selectedMovie ? 'h-screen overflow-hidden' : ''}`}>
@@ -167,6 +172,7 @@ const App: React.FC = () => {
           <h1 className="text-2xl font-black text-red-600 italic tracking-tighter cursor-pointer" onClick={() => {setViewMode('home'); setSearchQuery(''); handleCloseMovie();}}>CINEWISE</h1>
           <nav className="hidden md:flex gap-6 text-[10px] font-black uppercase tracking-widest">
             <button onClick={() => setViewMode('home')} className={viewMode === 'home' ? 'text-white border-b-2 border-red-600' : 'text-zinc-500 hover:text-white'}>Home</button>
+            <button onClick={() => setViewMode('upcoming')} className={viewMode === 'upcoming' ? 'text-white border-b-2 border-red-600' : 'text-zinc-500 hover:text-white'}>Upcoming</button>
             <button onClick={() => setViewMode('news')} className={viewMode === 'news' ? 'text-white border-b-2 border-red-600' : 'text-zinc-500 hover:text-white'}>2026 News</button>
           </nav>
         </div>
@@ -178,29 +184,28 @@ const App: React.FC = () => {
 
       {viewMode === 'disclaimer' ? (
         <div className="pt-32 px-6 max-w-4xl mx-auto min-h-screen animate-in fade-in duration-500">
-          <h1 className="text-4xl font-black italic mb-6">DISCLAIMER</h1>
-          <p className="text-zinc-400 italic leading-relaxed">CineWise is a movie discovery platform. All trailer content and movie data are served via official YouTube and TMDB APIs. We do not host copyrighted files.</p>
+          <h1 className="text-4xl font-black italic mb-6">DISCLAIMER & PRIVACY</h1>
+          <p className="text-zinc-400 italic leading-relaxed">CineWise is a movie discovery platform. All trailer content and movie data are served via official YouTube and TMDB APIs. We do not host copyrighted files on our servers.</p>
           <button onClick={() => setViewMode('home')} className="mt-8 text-red-600 font-bold hover:underline">← BACK TO DISCOVERY</button>
         </div>
       ) : (
         <>
-          {!searchQuery && viewMode === 'home' && trending[0] && (
+          {!searchQuery && viewMode === 'home' && movies[0] && (
             <section className="relative h-[80vh] w-full flex items-center px-6 md:px-16 overflow-hidden">
-              <img src={getImageUrl(trending[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover" alt="Banner" />
+              <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover" alt="Banner" />
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent"></div>
               <div className="relative max-w-3xl space-y-6">
-                <h2 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter leading-none">{trending[0].title}</h2>
-                <button onClick={() => handleOpenMovie(trending[0])} className="bg-white text-black font-black px-10 py-4 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-2xl">VIEW DETAILS</button>
+                <h2 className="text-5xl md:text-8xl font-black italic uppercase tracking-tighter leading-none">{movies[0].title}</h2>
+                <button onClick={() => handleOpenMovie(movies[0])} className="bg-white text-black font-black px-10 py-4 rounded-xl hover:bg-red-600 hover:text-white transition-all shadow-2xl">VIEW DETAILS</button>
               </div>
             </section>
           )}
 
           <main className="px-6 md:px-12 py-20 min-h-screen">
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 mb-8 flex items-center gap-4">
-              {searchQuery ? 'Search Results' : viewMode === 'home' ? 'Trending Global' : 'Production News'}
+              {searchQuery ? 'Search Results' : viewMode === 'home' ? 'Trending Global' : viewMode === 'upcoming' ? 'Upcoming 2026' : 'Production News'}
               <span className="h-px flex-1 bg-zinc-800"></span>
             </h2>
-            
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
               {displayedMovies.map(m => (
                 <div key={m.id} onClick={() => handleOpenMovie(m)} className="relative group cursor-pointer transition-all hover:scale-105">
@@ -222,10 +227,7 @@ const App: React.FC = () => {
             {!searchQuery && (
               <div className="flex justify-center mt-16 mb-10">
                 <button 
-                  onClick={() => {
-                    const nextPage = viewMode === 'home' ? (trending.length / 20) + 1 : (popular.length / 20) + 1;
-                    fetchData(nextPage, viewMode === 'home' ? 'trending' : 'popular');
-                  }} 
+                  onClick={() => fetchData((movies.length / 20) + 1)} 
                   className="bg-zinc-900 hover:bg-red-600 border border-zinc-800 text-white font-black px-12 py-4 rounded-2xl transition-all active:scale-95 shadow-xl tracking-widest text-xs"
                 >
                   LOAD MORE MOVIES
@@ -243,7 +245,7 @@ const App: React.FC = () => {
           <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600 transition-colors">Disclaimer</button>
           <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600 transition-colors">Privacy Policy</button>
         </div>
-        <p className="text-xs text-zinc-700 font-bold">&copy; 2026 CINEWISE - EXPLORE TRENDING MOVIES</p>
+        <p className="text-xs text-zinc-700 font-bold tracking-tighter">&copy; 2026 CINEWISE - EXPLORE TRENDING MOVIES</p>
       </footer>
     </div>
   );
