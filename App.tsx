@@ -35,7 +35,6 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
 
   useEffect(() => {
     if (movie) {
-      // Fetch Trailer
       fetch(`${TMDB_BASE_URL}/movie/${movie.id}/videos?api_key=${TMDB_API_KEY}`)
         .then(res => res.json())
         .then(data => {
@@ -43,7 +42,6 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
           setVideoKey(trailer ? trailer.key : null);
         });
 
-      // Fetch Watch Providers
       fetch(`${TMDB_BASE_URL}/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`)
         .then(res => res.json())
         .then(data => {
@@ -114,23 +112,19 @@ const App: React.FC = () => {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // SEO & URL Logic
+  const calculateCountdown = (date: string) => {
+    if (!date) return 'TBA 2026';
+    const diff = +new Date(date) - +new Date();
+    if (diff <= 0) return "Released";
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    return `${days} Days to Go`;
+  };
+
   const handleOpenMovie = (movie: Movie) => {
     setSelectedMovie(movie);
     const slug = movie.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
     window.history.pushState({ movieId: movie.id }, '', `/${slug}`);
-    
-    // Google Search Title update
     document.title = `${movie.title} (2026) - Watch Trailers & News on CineWise`;
-    
-    // Meta Description update
-    let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-      metaDesc = document.createElement('meta');
-      metaDesc.setAttribute('name', 'description');
-      document.head.appendChild(metaDesc);
-    }
-    metaDesc.setAttribute('content', `Get details for ${movie.title}. Release date: ${movie.release_date}. Overview: ${movie.overview.slice(0, 150)}...`);
   };
 
   const handleCloseMovie = () => {
@@ -138,13 +132,8 @@ const App: React.FC = () => {
     window.history.pushState({}, '', '/');
     document.title = 'CineWise - 2026 Trending Hollywood Updates';
   };
-const calculateCountdown = (date: string) => {
-    const diff = +new Date(date) - +new Date();
-    if (diff <= 0) return "Released";
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    return `${days} Days to Go`;
-  };
- const fetchData = useCallback(async (page: number = 1, type: 'trending' | 'popular' = 'trending') => {
+
+  const fetchData = useCallback(async (page: number = 1, type: 'trending' | 'popular' = 'trending') => {
     const endpoint = type === 'trending' 
       ? `${TMDB_BASE_URL}/trending/movie/day?api_key=${TMDB_API_KEY}&page=${page}`
       : `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=${page}`;
@@ -195,7 +184,6 @@ const calculateCountdown = (date: string) => {
         </div>
       ) : (
         <>
-          {/* Hero Banner Restore */}
           {!searchQuery && viewMode === 'home' && trending[0] && (
             <section className="relative h-[80vh] w-full flex items-center px-6 md:px-16 overflow-hidden">
               <img src={getImageUrl(trending[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover" alt="Banner" />
@@ -212,18 +200,25 @@ const calculateCountdown = (date: string) => {
               {searchQuery ? 'Search Results' : viewMode === 'home' ? 'Trending Global' : 'Production News'}
               <span className="h-px flex-1 bg-zinc-800"></span>
             </h2>
+            
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
               {displayedMovies.map(m => (
-            <div key={m.id} onClick={() => handleOpenMovie(m)} className="relative group cursor-pointer transition-all hover:scale-105">
-              <div className="aspect-[2/3] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-lg">
-                <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:opacity-50 transition-opacity" alt={m.title} />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <span className="text-white font-medium px-4 py-2 bg-black/50 rounded-full backdrop-blur-sm">View Details</span>
+                <div key={m.id} onClick={() => handleOpenMovie(m)} className="relative group cursor-pointer transition-all hover:scale-105">
+                  <div className="aspect-[2/3] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-lg relative">
+                    <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:opacity-20 transition-opacity" alt={m.title} />
+                    <div className="absolute inset-0 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black">
+                      <div className="flex flex-col gap-0.5 text-left">
+                        <span className="text-[10px] font-black uppercase italic leading-none">{m.title}</span>
+                        <span className="text-[8px] text-red-500 font-bold tracking-widest uppercase">
+                          ⏳ {calculateCountdown(m.release_date)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-           {/* LOAD MORE BUTTON START */}
+
             {!searchQuery && (
               <div className="flex justify-center mt-16 mb-10">
                 <button 
@@ -237,20 +232,18 @@ const calculateCountdown = (date: string) => {
                 </button>
               </div>
             )}
-            {/* LOAD MORE BUTTON END */}
           </main>
         </>
       )}
 
       <MovieDetailModal movie={selectedMovie} onClose={handleCloseMovie} />
 
-      {/* Footer Restore */}
       <footer className="py-12 bg-zinc-950 text-center border-t border-zinc-900">
         <div className="flex justify-center gap-8 text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4">
           <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600 transition-colors">Disclaimer</button>
           <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600 transition-colors">Privacy Policy</button>
         </div>
-        <p className="text-xs text-zinc-700 font-bold">&copy; © 2026 CINEWISE - EXPLORE TRENDING MOVIES</p>
+        <p className="text-xs text-zinc-700 font-bold">&copy; 2026 CINEWISE - EXPLORE TRENDING MOVIES</p>
       </footer>
     </div>
   );
