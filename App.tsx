@@ -272,7 +272,6 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen transition-all duration-700 ${hackerMode ? 'bg-black text-green-500 font-mono' : 'bg-zinc-950 text-white'} selection:bg-red-600`}>
-      {/* --- UPDATED HEADER & NAVIGATION --- */}
       <header className={`fixed top-0 w-full z-[100] transition-all duration-700 px-6 md:px-20 py-6 flex items-center justify-between ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/80 border-b border-zinc-800/50 backdrop-blur-2xl py-4' : 'bg-transparent'}`}>
         <div className="flex items-center gap-12">
           <h1 className={`text-4xl font-black italic tracking-tighter cursor-pointer transition-transform hover:scale-105 ${hackerMode ? 'text-green-500' : 'text-red-600'}`} onClick={() => setViewMode('home')}>CINEWISE</h1>
@@ -283,6 +282,7 @@ const App: React.FC = () => {
               className={`px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === 'home' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>
               Discovery
             </button>
+            {/* UPDATED UPCOMING BUTTON */}
             <button 
               onClick={() => setViewMode('upcoming')} 
               className={`px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === 'upcoming' ? 'bg-red-600 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]' : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'}`}>
