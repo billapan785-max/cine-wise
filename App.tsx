@@ -54,10 +54,10 @@ const SpoilerRoulette: React.FC<{onClose: () => void}> = ({onClose}) => {
   };
   return (
     <div className="fixed inset-0 z-[600] bg-black/98 backdrop-blur-3xl flex items-center justify-center p-6 animate-in fade-in duration-500">
-      <div className="w-full max-w-xl bg-zinc-900 border-2 border-yellow-500 rounded-[3.5rem] p-12 text-center space-y-10 shadow-[0_0_100px_rgba(234,179,8,0.15)]">
-        <h3 className="text-5xl font-black italic text-yellow-500 uppercase tracking-tighter">Movie Spoilers</h3>
+      <div className="w-full max-w-xl bg-zinc-900 border-2 border-yellow-500 rounded-[3.5rem] p-8 md:p-12 text-center space-y-10 shadow-[0_0_100px_rgba(234,179,8,0.15)]">
+        <h3 className="text-4xl md:text-5xl font-black italic text-yellow-500 uppercase tracking-tighter">Movie Spoilers</h3>
         <div className="py-12 border-y border-zinc-800">
-          <p className={`text-2xl font-bold italic transition-all duration-500 ${isSpinning ? 'opacity-20 blur-xl scale-90' : 'opacity-100 text-white'}`}>
+          <p className={`text-xl md:text-2xl font-bold italic transition-all duration-500 ${isSpinning ? 'opacity-20 blur-xl scale-90' : 'opacity-100 text-white'}`}>
             {spoiler || "Want to see 2026 movie leaks?"}
           </p>
         </div>
@@ -81,26 +81,56 @@ const VibeMatcher: React.FC<{onClose: () => void}> = ({onClose}) => {
   const [match, setMatch] = useState<{name: string, desc: string} | null>(null);
   return (
     <div className="fixed inset-0 z-[600] bg-zinc-950/98 flex items-center justify-center p-6 backdrop-blur-md">
-      <div className="w-full max-w-2xl bg-white rounded-[4rem] p-16 text-black space-y-12 shadow-[0_0_120px_rgba(255,255,255,0.1)]">
-        <h3 className="text-6xl font-black italic uppercase tracking-tighter">Vibe Check</h3>
-        <div className="grid grid-cols-2 gap-6">
+      <div className="w-full max-w-2xl bg-white rounded-[3rem] md:rounded-[4rem] p-8 md:p-16 text-black space-y-12 shadow-[0_0_120px_rgba(255,255,255,0.1)]">
+        <h3 className="text-5xl md:text-6xl font-black italic uppercase tracking-tighter">Vibe Check</h3>
+        <div className="grid grid-cols-2 gap-4 md:gap-6">
           {moods.map(m => (
-            <button key={m.name} onClick={() => setMatch(m)} className="border-4 border-black py-8 rounded-[2.5rem] font-black uppercase text-xs hover:bg-black hover:text-white transition-all transform hover:-translate-y-1">
+            <button key={m.name} onClick={() => setMatch(m)} className="border-2 md:border-4 border-black py-6 md:py-8 rounded-[2rem] font-black uppercase text-[10px] md:text-xs hover:bg-black hover:text-white transition-all transform hover:-translate-y-1">
               {m.name}
             </button>
           ))}
         </div>
         {match && (
-          <div className="bg-zinc-100 p-12 rounded-[3rem] text-center animate-in zoom-in slide-in-from-bottom-5 duration-500 border-2 border-black/5">
+          <div className="bg-zinc-100 p-8 md:p-12 rounded-[2.5rem] text-center animate-in zoom-in duration-500 border-2 border-black/5">
             <p className="text-[10px] font-black uppercase tracking-widest mb-4 opacity-40">Your Persona</p>
-            <p className="text-5xl font-black italic uppercase text-red-600 tracking-tighter mb-4">{match.name}</p>
-            <p className="text-sm font-bold text-zinc-500 italic uppercase">{match.desc}</p>
+            <p className="text-3xl md:text-5xl font-black italic uppercase text-red-600 tracking-tighter mb-4">{match.name}</p>
+            <p className="text-xs md:text-sm font-bold text-zinc-500 italic uppercase">{match.desc}</p>
           </div>
         )}
         <button onClick={onClose} className="w-full text-center text-[10px] font-black uppercase tracking-[0.5em] opacity-30 hover:opacity-100 transition-opacity">Return to Home</button>
       </div>
     </div>
   );
+};
+
+// --- NEW FEATURE: CHARACTER MIRROR ---
+const CharacterMirror: React.FC<{onClose: () => void}> = ({onClose}) => {
+    const [matching, setMatching] = useState(false);
+    const [result, setResult] = useState<string | null>(null);
+    const startAnalysis = () => {
+      setMatching(true);
+      setTimeout(() => {
+        const chars = ["Tony Stark", "Joker", "Wednesday Addams", "Batman", "Thomas Shelby", "Barbie"];
+        setResult(chars[Math.floor(Math.random() * chars.length)]);
+        setMatching(false);
+      }, 2000);
+    };
+    return (
+      <div className="fixed inset-0 z-[600] bg-black/95 flex items-center justify-center p-6 backdrop-blur-3xl">
+        <div className="w-full max-w-xl bg-zinc-950 border-2 border-blue-600 rounded-[3rem] p-10 text-center space-y-10">
+          <h3 className="text-4xl font-black italic text-blue-500 uppercase tracking-tighter">Face Mirror</h3>
+          <div className="py-10 bg-zinc-900 rounded-[2rem] border border-zinc-800">
+            {matching ? <p className="text-white animate-pulse font-black uppercase tracking-widest text-xs">AI Scanning Face...</p> : 
+             result ? <p className="text-4xl font-black text-blue-400 uppercase italic tracking-tighter">{result}</p> : 
+             <p className="text-zinc-500 text-[10px] font-black uppercase">Click Scan to see your movie lookalike</p>}
+          </div>
+          <div className="space-y-4">
+            {!result && <button onClick={startAnalysis} className="w-full bg-blue-600 text-white font-black py-6 rounded-[2rem] text-xs uppercase tracking-widest">Start Scan</button>}
+            <button onClick={onClose} className="w-full text-zinc-700 text-[10px] font-black uppercase tracking-widest">Exit</button>
+          </div>
+        </div>
+      </div>
+    );
 };
 
 // --- FEATURE 3: GHOSTFACE PRANK ---
@@ -123,72 +153,19 @@ const GhostFacePrank: React.FC<{onClose: () => void}> = ({onClose}) => {
   };
   return (
     <div className="fixed inset-0 z-[600] bg-black/95 flex items-center justify-center p-6 backdrop-blur-xl">
-      <div className="w-full max-w-xl bg-zinc-950 border-2 border-red-600 rounded-[4rem] p-12 relative shadow-[0_0_150px_rgba(220,38,38,0.3)]">
-        <button onClick={onClose} className="absolute top-12 right-12 text-zinc-600 hover:text-white text-3xl transition-all">✕</button>
+      <div className="w-full max-w-xl bg-zinc-950 border-2 border-red-600 rounded-[3rem] md:rounded-[4rem] p-8 md:p-12 relative shadow-[0_0_150px_rgba(220,38,38,0.3)]">
+        <button onClick={onClose} className="absolute top-8 right-8 text-zinc-600 hover:text-white text-3xl">✕</button>
         <div className="text-center space-y-12">
           <div className="space-y-4">
-             <h3 className="text-6xl font-black italic text-red-600 uppercase tracking-tighter">Scream Call</h3>
+             <h3 className="text-5xl md:text-6xl font-black italic text-red-600 uppercase tracking-tighter">Scream Call</h3>
              <p className="text-[10px] text-zinc-500 font-black uppercase tracking-[0.3em]">Voice Simulator Active</p>
           </div>
           <div className="space-y-6">
-            <input type="text" placeholder="VICTIM NAME" className="w-full bg-zinc-900/50 border-2 border-zinc-800 rounded-3xl py-8 px-10 text-white text-center text-2xl outline-none focus:border-red-600 font-black transition-all placeholder:text-zinc-700" value={victimName} onChange={(e) => setVictimName(e.target.value)} />
-            <button onClick={startPrank} disabled={status !== 'idle'} className="w-full bg-red-600 text-white font-black py-10 rounded-[2.5rem] hover:scale-105 transition-all shadow-2xl uppercase tracking-[0.2em] text-sm">
+            <input type="text" placeholder="VICTIM NAME" className="w-full bg-zinc-900/50 border-2 border-zinc-800 rounded-3xl py-6 md:py-8 px-10 text-white text-center text-xl md:text-2xl outline-none focus:border-red-600 font-black placeholder:text-zinc-700" value={victimName} onChange={(e) => setVictimName(e.target.value)} />
+            <button onClick={startPrank} disabled={status !== 'idle'} className="w-full bg-red-600 text-white font-black py-8 md:py-10 rounded-[2.5rem] hover:scale-105 transition-all uppercase tracking-[0.2em] text-sm">
               {status === 'idle' ? 'Start Call' : status === 'ringing' ? '📞 RINGING...' : '🔪 CONNECTED...'}
             </button>
           </div>
-          <p className="text-[10px] text-zinc-800 uppercase font-black tracking-widest leading-relaxed">For fun only. Do not use for harassment.</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- NEW FEATURE: CHARACTER MIRROR ---
-const CharacterMirror: React.FC<{onClose: () => void}> = ({onClose}) => {
-  const [matching, setMatching] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
-  const startAnalysis = () => {
-    setMatching(true);
-    setTimeout(() => {
-      const chars = ["Tony Stark", "Joker", "Wednesday Addams", "Batman", "Thomas Shelby", "Barbie"];
-      setResult(chars[Math.floor(Math.random() * chars.length)]);
-      setMatching(false);
-    }, 2500);
-  };
-  return (
-    <div className="fixed inset-0 z-[600] bg-black/95 flex items-center justify-center p-6 backdrop-blur-3xl">
-      <div className="w-full max-w-xl bg-zinc-950 border-2 border-blue-600 rounded-[4rem] p-12 text-center space-y-10 shadow-[0_0_100px_rgba(37,99,235,0.2)]">
-        <h3 className="text-5xl font-black italic text-blue-500 uppercase tracking-tighter">Character Mirror</h3>
-        <div className="py-10 bg-zinc-900 rounded-[3rem] border border-zinc-800">
-          {matching ? <p className="text-white animate-pulse font-black uppercase tracking-widest text-xs">Scanning DNA...</p> : 
-           result ? <p className="text-4xl font-black text-blue-400 uppercase italic tracking-tighter">{result}</p> : 
-           <p className="text-zinc-500 text-xs font-black uppercase">Click scan to match your face</p>}
-        </div>
-        <div className="space-y-4">
-          {!result && <button onClick={startAnalysis} className="w-full bg-blue-600 text-white font-black py-7 rounded-[2rem] text-sm uppercase tracking-widest">Start AI Scan</button>}
-          {result && <p className="text-[10px] text-zinc-500 italic uppercase">Pro Tip: Use <a href="https://bgremoverai.online" target="_blank" className="text-blue-500 underline">bgremoverai.online</a> for clean photos!</p>}
-          <button onClick={onClose} className="w-full text-zinc-700 text-[10px] font-black uppercase tracking-widest">Close</button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- NEW FEATURE: BLIND DATE ---
-const BlindDate: React.FC<{movies: Movie[], onSelect: (m: Movie) => void, onClose: () => void}> = ({movies, onSelect, onClose}) => {
-  const [revealed, setRevealed] = useState(false);
-  const [movie] = useState(movies[Math.floor(Math.random() * movies.length)]);
-  return (
-    <div className="fixed inset-0 z-[600] bg-zinc-950 flex items-center justify-center p-6">
-      <div className="w-full max-w-md text-center space-y-10">
-        <h3 className="text-5xl font-black italic uppercase text-white tracking-tighter">Movie Blind Date</h3>
-        <div className={`aspect-[2/3] w-64 mx-auto rounded-[3rem] border-4 border-zinc-800 overflow-hidden transition-all duration-1000 ${revealed ? 'blur-0' : 'blur-3xl grayscale scale-90'}`}>
-          <img src={getImageUrl(movie?.poster_path)} className="w-full h-full object-cover" alt="?" />
-        </div>
-        <div className="space-y-4">
-          {!revealed ? <button onClick={() => setRevealed(true)} className="w-full bg-white text-black font-black py-7 rounded-[2rem] uppercase text-xs">Reveal Date</button> :
-          <button onClick={() => onSelect(movie)} className="w-full bg-red-600 text-white font-black py-7 rounded-[2rem] uppercase text-xs">View Movie</button>}
-          <button onClick={onClose} className="text-zinc-700 text-[10px] font-black uppercase">Go Back</button>
         </div>
       </div>
     </div>
@@ -225,9 +202,9 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
   return (
     <div className="fixed inset-0 z-[200] bg-zinc-950/98 backdrop-blur-3xl overflow-y-auto pt-24 pb-10 px-4 animate-in fade-in zoom-in duration-500">
       <div className="absolute inset-0 -z-10" onClick={onClose}></div>
-      <div className="relative w-full max-w-6xl mx-auto bg-zinc-900 rounded-[4rem] overflow-hidden border border-zinc-800 shadow-[0_0_100px_rgba(0,0,0,0.5)]">
-        <button onClick={onClose} className="absolute top-10 right-10 z-[220] bg-black/60 hover:bg-red-600 w-16 h-16 rounded-full flex items-center justify-center text-white transition-all shadow-2xl hover:rotate-90">
-          <i className="fa-solid fa-xmark text-2xl"></i>
+      <div className="relative w-full max-w-6xl mx-auto bg-zinc-900 rounded-[3rem] md:rounded-[4rem] overflow-hidden border border-zinc-800 shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+        <button onClick={onClose} className="absolute top-6 right-6 md:top-10 md:right-10 z-[220] bg-black/60 hover:bg-red-600 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white transition-all shadow-2xl">
+          <i className="fa-solid fa-xmark text-xl md:text-2xl"></i>
         </button>
         <div className="flex flex-col">
           <div className="w-full bg-black aspect-video relative group">
@@ -235,53 +212,37 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
               <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${videoKey}?autoplay=1&rel=0`} title={movie.title} frameBorder="0" allow="autoplay; encrypted-media" allowFullScreen></iframe>
             ) : (
               <div className="relative w-full h-full overflow-hidden">
-                <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover opacity-50 group-hover:scale-110 transition-transform duration-[5000ms] ease-out" alt={movie.title} />
+                <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover opacity-50" alt={movie.title} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-8">
-                  <div className="w-28 h-28 bg-red-600 rounded-full flex items-center justify-center animate-pulse shadow-[0_0_80px_rgba(220,38,38,0.6)]">
-                     <i className="fa-solid fa-play text-4xl text-white ml-2"></i>
+                  <div className="w-20 h-20 md:w-28 md:h-28 bg-red-600 rounded-full flex items-center justify-center animate-pulse">
+                     <i className="fa-solid fa-play text-2xl md:text-4xl text-white ml-1 md:ml-2"></i>
                   </div>
-                  <button onClick={() => setShowPlayer(true)} className="bg-white text-black px-16 py-6 rounded-2xl flex items-center gap-6 hover:bg-red-600 hover:text-white transition-all font-black text-2xl tracking-tighter uppercase transform hover:scale-110">Watch Trailer</button>
+                  <button onClick={() => setShowPlayer(true)} className="bg-white text-black px-8 md:px-16 py-4 md:py-6 rounded-2xl font-black text-lg md:text-2xl uppercase tracking-tighter transform hover:scale-110 transition-all">Watch Trailer</button>
                 </div>
               </div>
             )}
           </div>
-          <div className="p-10 md:p-24 space-y-20">
+          <div className="p-8 md:p-24 space-y-16 md:space-y-20">
             <div className="space-y-8">
-              <h2 className="text-6xl md:text-[9rem] font-black uppercase italic tracking-tighter leading-[0.8] text-white drop-shadow-2xl">{movie.title}</h2>
-              <div className="flex flex-wrap gap-8 text-sm font-bold items-center">
-                <span className="text-green-500 bg-green-500/10 px-6 py-3 rounded-2xl border border-green-500/20 shadow-xl">{Math.round(movie.vote_average * 10)}% Vibe Score</span>
-                <span className="text-zinc-400 bg-zinc-800/50 px-6 py-3 rounded-2xl border border-zinc-700/50 uppercase tracking-widest">{movie.release_date}</span>
-                <span className="text-red-500 font-black tracking-[0.3em] border-l border-zinc-800 pl-8 uppercase">Free Access</span>
+              <h2 className="text-4xl md:text-[9rem] font-black uppercase italic tracking-tighter leading-[0.8] text-white">{movie.title}</h2>
+              <div className="flex flex-wrap gap-4 md:gap-8 text-[10px] md:text-sm font-bold items-center">
+                <span className="text-green-500 bg-green-500/10 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-green-500/20">{Math.round(movie.vote_average * 10)}% Vibe Score</span>
+                <span className="text-zinc-400 bg-zinc-800/50 px-4 md:px-6 py-2 md:py-3 rounded-xl border border-zinc-700/50 uppercase tracking-widest">{movie.release_date}</span>
+                <span className="text-red-500 font-black tracking-[0.3em] uppercase hidden md:inline">Free Access</span>
               </div>
             </div>
-            <div className="grid md:grid-cols-3 gap-16 border-t border-zinc-800/50 pt-16">
-              <div className="md:col-span-2 space-y-10">
+            <div className="grid md:grid-cols-3 gap-10 md:gap-16 border-t border-zinc-800/50 pt-16">
+              <div className="md:col-span-2 space-y-6 md:space-y-10">
                 <h3 className="text-[10px] font-black uppercase tracking-[0.6em] text-zinc-600">Story Overview</h3>
-                <p className="text-2xl md:text-4xl text-zinc-300 font-light leading-relaxed italic antialiased tracking-tight">"{movie.overview}"</p>
+                <p className="text-lg md:text-4xl text-zinc-300 font-light leading-relaxed italic">"{movie.overview}"</p>
               </div>
               <div className="space-y-10">
                   <h3 className="text-[10px] font-black uppercase tracking-[0.6em] text-red-600">Available On</h3>
-                  <div className="flex flex-wrap gap-6">
+                  <div className="flex flex-wrap gap-4 md:gap-6">
                    {providers.length > 0 ? providers.map(p => (
-                    <img key={p.provider_id} src={getImageUrl(p.logo_path, 'w92')} className="w-16 h-16 rounded-[1.5rem] border border-zinc-700 shadow-2xl hover:scale-110 transition-transform" alt={p.provider_name} />
-                  )) : <p className="text-[10px] text-zinc-700 font-bold uppercase italic tracking-widest">No Streams Found</p>}
+                    <img key={p.provider_id} src={getImageUrl(p.logo_path, 'w92')} className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[1.5rem] border border-zinc-700 shadow-2xl" alt={p.provider_name} />
+                  )) : <p className="text-[10px] text-zinc-700 font-bold uppercase tracking-widest italic">No Streams Found</p>}
                   </div>
-              </div>
-            </div>
-            <div className="space-y-12 border-t border-zinc-800/50 pt-16">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.7em] text-zinc-600 flex items-center gap-10">Cast & Crew <span className="h-px flex-1 bg-zinc-900"></span></h3>
-              <div className="flex gap-12 overflow-x-auto pb-10 scrollbar-hide snap-x">
-                {cast.map(person => (
-                  <div key={person.id} className="flex-shrink-0 w-40 md:w-52 text-center space-y-6 group/actor snap-center">
-                    <div className="relative overflow-hidden rounded-full aspect-square border-4 border-zinc-800 group-hover/actor:border-red-600 transition-all duration-700 shadow-3xl">
-                       <img src={getImageUrl(person.profile_path, 'w185')} className="w-full h-full object-cover group-hover/actor:scale-125 transition-transform duration-[1500ms]" alt={person.name} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-black uppercase text-white leading-tight tracking-tighter">{person.name}</p>
-                      <p className="text-[10px] text-zinc-600 uppercase italic tracking-tighter mt-2">{person.character}</p>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
@@ -296,19 +257,19 @@ const LegalTerminal: React.FC<{onClose: () => void}> = ({onClose}) => (
   <div className="fixed inset-0 z-[700] bg-zinc-950 overflow-y-auto animate-in fade-in duration-700">
     <div className="max-w-4xl mx-auto px-6 py-32 space-y-24">
         <div className="space-y-6 text-center">
-           <h2 className="text-7xl md:text-[10rem] font-black italic uppercase tracking-tighter text-white">LEGAL</h2>
-           <p className="text-red-600 font-black tracking-[0.5em] uppercase text-xs">2026 // Fully Anonymous</p>
+           <h2 className="text-6xl md:text-[10rem] font-black italic uppercase tracking-tighter text-white">LEGAL</h2>
+           <p className="text-red-600 font-black tracking-[0.5em] uppercase text-[9px] md:text-xs">2026 // Fully Anonymous</p>
         </div>
         <div className="space-y-20">
           <section className="space-y-8">
-             <h3 className="text-2xl font-black uppercase tracking-[0.2em] text-white border-l-8 border-red-600 pl-8">Privacy Policy</h3>
+             <h3 className="text-xl md:text-2xl font-black uppercase tracking-[0.2em] text-white border-l-8 border-red-600 pl-8">Privacy Policy</h3>
              <div className="text-zinc-500 font-bold leading-loose text-sm md:text-lg space-y-6 italic">
-                <p>CINEWISE aapka koi bhi data save nahi karta. Hum koi login account ya email nahi maangte. Sari movie details real-time mein TMDB API se aati hain. Agar aapko photos ka background hatana hai, toh hum <span className="text-white underline font-black">bgremoverai.online</span> suggest karte hain kyunki ye free hai aur isme login ki zarurat nahi padti.</p>
+                <p>CINEWISE aapka koi bhi data save nahi karta. Hum koi login account ya email nahi maangte. Sari movie details real-time mein TMDB API se aati hain. Agar aapko photos ka background hatana hai, toh hum <span className="text-white underline font-black">bgremoverai.online</span> suggest karte hain kyunki ye free hai aur no-login requirement ke saath aati hai.</p>
              </div>
           </section>
         </div>
         <div className="text-center pt-10">
-          <button onClick={onClose} className="bg-white text-black font-black px-16 py-6 rounded-2xl hover:bg-red-600 hover:text-white transition-all text-xs uppercase tracking-widest">Close</button>
+          <button onClick={onClose} className="bg-white text-black font-black px-12 md:px-16 py-5 md:py-6 rounded-2xl hover:bg-red-600 hover:text-white transition-all text-[10px] uppercase tracking-widest">Close</button>
         </div>
     </div>
   </div>
@@ -328,7 +289,6 @@ const App: React.FC = () => {
   const [showSpoiler, setShowSpoiler] = useState(false);
   const [showVibe, setShowVibe] = useState(false);
   const [showMirror, setShowMirror] = useState(false);
-  const [showBlindDate, setShowBlindDate] = useState(false);
   const [hackerMode, setHackerMode] = useState(false);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   
@@ -344,6 +304,14 @@ const App: React.FC = () => {
     if (isMusicPlaying) audioRef.current?.pause();
     else audioRef.current?.play();
     setIsMusicPlaying(!isMusicPlaying);
+  };
+
+  const calculateCountdown = (date: string) => {
+    if (!date) return 'TBA';
+    const diff = +new Date(date) - +new Date();
+    if (diff <= 0) return "Out Now";
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    return `${days}D Left`;
   };
 
   const fetchData = useCallback(async (targetPage: number) => {
@@ -367,105 +335,121 @@ const App: React.FC = () => {
   return (
     <div className={`min-h-screen transition-all duration-1000 ${hackerMode ? 'bg-black text-green-500 font-mono' : 'bg-zinc-950 text-white'}`}>
       
-      {/* HEADER - RESTORED ORIGINAL WITH NEW BUTTONS */}
-      <header className={`fixed top-0 w-full z-[100] transition-all duration-700 px-6 md:px-20 py-8 flex items-center justify-between gap-4 ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/90 border-b border-zinc-800/50 backdrop-blur-3xl py-5' : 'bg-transparent'}`}>
-        <div className="flex items-center gap-10 flex-shrink-0">
-          <h1 className={`text-4xl md:text-5xl font-black italic tracking-tighter cursor-pointer transition-transform hover:scale-105 flex-shrink-0 ${hackerMode ? 'text-green-500' : 'text-red-600'}`} onClick={() => setViewMode('home')}>CINEWISE</h1>
-          <nav className="hidden xl:flex gap-2 p-1 bg-zinc-900/50 rounded-2xl border border-zinc-800/50 backdrop-blur-md flex-shrink-0">
-            {['home', 'upcoming', 'news'].map((m) => (
-              <button key={m} onClick={() => setViewMode(m as any)} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${viewMode === m ? 'bg-red-600 text-white shadow-2xl' : 'text-zinc-500 hover:text-white hover:bg-zinc-800'}`}>{m}</button>
-            ))}
-            <div className="w-px h-5 bg-zinc-800 self-center mx-1"></div>
-            <button onClick={() => setShowVibe(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">Vibe</button>
-            <button onClick={() => setShowMirror(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-blue-400 hover:text-blue-300">Mirror</button>
-            <button onClick={() => setShowBlindDate(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-purple-400">Date</button>
-            <button onClick={() => setShowSpoiler(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-yellow-500">Leaks</button>
-            <button onClick={toggleMusic} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:text-white">{isMusicPlaying ? 'Stop' : 'Music'}</button>
-            <button onClick={() => setHackerMode(!hackerMode)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-600">Matrix</button>
+      {/* HEADER - MOBILE RESPONSIVE */}
+      <header className={`fixed top-0 w-full z-[100] transition-all duration-700 px-6 md:px-20 py-6 md:py-8 flex flex-col md:flex-row items-center justify-between gap-6 ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/90 border-b border-zinc-800/50 backdrop-blur-3xl py-4' : 'bg-transparent'}`}>
+        <div className="flex items-center justify-between w-full md:w-auto gap-10">
+          <h1 className={`text-3xl md:text-5xl font-black italic tracking-tighter cursor-pointer ${hackerMode ? 'text-green-500' : 'text-red-600'}`} onClick={() => setViewMode('home')}>CINEWISE</h1>
+          
+          <nav className="flex md:hidden gap-4">
+             <button onClick={() => setShowPrank(true)} className="text-red-600 text-xl"><i className="fa-solid fa-skull"></i></button>
+             <button onClick={toggleMusic} className="text-white text-xl"><i className={`fa-solid ${isMusicPlaying ? 'fa-volume-high' : 'fa-volume-xmark'}`}></i></button>
           </nav>
         </div>
 
-        {/* SEARCH BAR - RESTORED */}
-        <div className="flex items-center gap-4 flex-1 justify-end">
-            <button onClick={() => setShowPrank(true)} className="flex-shrink-0 group relative overflow-hidden bg-red-600 px-6 md:px-10 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] transition-all hover:scale-105 active:scale-95 shadow-2xl">
-              <span className="relative z-10 flex items-center gap-3 text-white"><i className="fa-solid fa-skull text-xs animate-bounce"></i> <span className="hidden md:inline">Scream Call</span></span>
+        {/* DESKTOP NAV & FEATURES */}
+        <nav className="hidden xl:flex gap-2 p-1 bg-zinc-900/50 rounded-2xl border border-zinc-800/50 backdrop-blur-md">
+          {['home', 'upcoming', 'news'].map((m) => (
+            <button key={m} onClick={() => setViewMode(m as any)} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === m ? 'bg-red-600 text-white' : 'text-zinc-500 hover:text-white'}`}>{m}</button>
+          ))}
+          <div className="w-px h-5 bg-zinc-800 self-center mx-1"></div>
+          <button onClick={() => setShowVibe(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white">Vibe</button>
+          <button onClick={() => setShowMirror(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-blue-500">Mirror</button>
+          <button onClick={() => setShowSpoiler(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-yellow-500">Leaks</button>
+          <button onClick={toggleMusic} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-600">{isMusicPlaying ? 'Stop' : 'Music'}</button>
+          <button onClick={() => setHackerMode(!hackerMode)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-600">Matrix</button>
+        </nav>
+
+        {/* SEARCH & PRANK */}
+        <div className="flex items-center gap-4 w-full md:max-w-md">
+            <button onClick={() => setShowPrank(true)} className="hidden md:flex flex-shrink-0 bg-red-600 px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] text-white">
+              Scream Call
             </button>
-            <div className="relative group max-w-sm w-full">
-               <input type="text" placeholder="SEARCH FILMS..." className="w-full bg-zinc-900/80 border-2 border-zinc-800 rounded-2xl py-3.5 px-14 text-[11px] outline-none focus:border-red-600/50 font-black placeholder:text-zinc-700 text-white transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-               <i className="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-zinc-600"></i>
+            <div className="relative group w-full">
+               <input type="text" placeholder="SEARCH FILMS..." className="w-full bg-zinc-900/80 border-2 border-zinc-800 rounded-2xl py-3.5 px-12 md:px-14 text-[11px] outline-none focus:border-red-600/50 font-black text-white" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+               <i className="fa-solid fa-magnifying-glass absolute left-5 md:left-6 top-1/2 -translate-y-1/2 text-zinc-600"></i>
             </div>
         </div>
       </header>
 
-      {/* MAIN CONTENT AREA */}
+      {/* HERO SECTION */}
       {viewMode === 'legal' ? <LegalTerminal onClose={() => setViewMode('home')} /> : (
         <>
           {!searchQuery && viewMode === 'home' && movies[0] && (
-            <section className="relative h-screen w-full flex items-center px-6 md:px-24 overflow-hidden">
+            <section className="relative h-[80vh] md:h-screen w-full flex items-center px-6 md:px-24 overflow-hidden">
               <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover opacity-30" alt="Hero" />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent"></div>
-              <div className="relative max-w-6xl space-y-12">
-                <span className="bg-red-600 text-[11px] font-black px-8 py-3 rounded-full uppercase">Trending Now</span>
-                <h2 className="text-6xl md:text-[12rem] font-black italic uppercase tracking-tighter leading-[0.8] text-white">{movies[0].title}</h2>
-                <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-12 md:px-20 py-5 rounded-[2.5rem] uppercase text-sm">View Details</button>
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent"></div>
+              <div className="relative max-w-6xl space-y-8 md:space-y-12">
+                <span className="bg-red-600 text-[10px] md:text-[11px] font-black px-6 md:px-8 py-2 md:py-3 rounded-full uppercase">Trending Now</span>
+                <h2 className="text-5xl md:text-[12rem] font-black italic uppercase tracking-tighter leading-[0.8] text-white">{movies[0].title}</h2>
+                <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-12 md:px-20 py-5 rounded-[2.5rem] uppercase text-xs md:text-sm">View Details</button>
               </div>
             </section>
           )}
 
-          <main className="px-6 md:px-20 py-40 min-h-screen">
-            <h2 className="text-[13px] font-black uppercase tracking-[0.7em] text-zinc-800 mb-24 flex items-center gap-12">
+          {/* GRID */}
+          <main className="px-6 md:px-20 py-24 md:py-40 min-h-screen">
+            <h2 className="text-[11px] md:text-[13px] font-black uppercase tracking-[0.5em] md:tracking-[0.7em] text-zinc-800 mb-16 md:mb-24 flex items-center gap-8 md:gap-12">
               Movies <span className="h-px flex-1 bg-zinc-900/50"></span>
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 md:gap-16">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 md:gap-16">
               {movies.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase())).map(m => (
                 <div key={m.id} onClick={() => setSelectedMovie(m)} className="group cursor-pointer">
-                  <div className="aspect-[2/3] overflow-hidden rounded-[2rem] border-2 border-zinc-900 group-hover:border-red-600 transition-all">
+                  <div className={`aspect-[2/3] overflow-hidden rounded-[1.5rem] md:rounded-[3rem] border-2 bg-zinc-900 relative transition-all duration-500 ${hackerMode ? 'border-green-900' : 'border-zinc-900 group-hover:border-red-600'}`}>
                     <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:opacity-40" alt={m.title} />
+                    <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-10 opacity-0 group-hover:opacity-100 transition-all text-white">
+                       <p className="text-[9px] md:text-[10px] text-red-500 font-black tracking-widest uppercase">
+                          {viewMode === 'upcoming' ? calculateCountdown(m.release_date) : `Vibe: ${Math.round(m.vote_average * 10)}%`}
+                       </p>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
+            {!searchQuery && (
+               <div className="flex justify-center mt-20 md:mt-40">
+                  <button onClick={() => fetchData(page + 1)} className="bg-zinc-900 text-white font-black px-12 md:px-24 py-5 md:py-8 rounded-[3rem] text-[10px] uppercase tracking-widest">Load More</button>
+               </div>
+            )}
           </main>
         </>
       )}
 
-      {/* FOOTER - RESTORED ORIGINAL */}
-      <footer className="py-32 bg-zinc-950 border-t border-zinc-900 mt-20">
-        <div className="max-w-7xl mx-auto px-10 grid grid-cols-1 md:grid-cols-4 gap-16 md:gap-24">
-          <div className="space-y-10">
-            <h3 className="text-4xl font-black italic tracking-tighter text-red-600">CINEWISE</h3>
-            <p className="text-xs font-bold text-zinc-600 leading-loose uppercase italic tracking-wider">Your simple movie search engine for 2026. No tracking, just movies.</p>
-          </div>
+      {/* FOOTER - ORIGINAL RESTORED */}
+      <footer className="py-20 md:py-32 bg-zinc-950 border-t border-zinc-900 mt-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-24">
           <div className="space-y-8">
+            <h3 className="text-3xl md:text-4xl font-black italic tracking-tighter text-red-600">CINEWISE</h3>
+            <p className="text-[10px] font-bold text-zinc-600 leading-loose uppercase italic tracking-wider">Your simple movie search engine for 2026. No tracking, just movies.</p>
+          </div>
+          <div className="space-y-6">
             <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">Menu</h4>
-            <ul className="space-y-5 text-[11px] font-black text-zinc-500 uppercase italic">
-              <li><button onClick={() => setViewMode('home')} className="hover:text-red-600 transition-colors">Home</button></li>
-              <li><button onClick={() => setViewMode('upcoming')} className="hover:text-red-600 transition-colors">Upcoming</button></li>
+            <ul className="space-y-4 text-[11px] font-black text-zinc-500 uppercase italic">
+              <li><button onClick={() => setViewMode('home')} className="hover:text-red-600">Home</button></li>
+              <li><button onClick={() => setViewMode('upcoming')} className="hover:text-red-600">Upcoming</button></li>
             </ul>
           </div>
-          <div className="space-y-8">
+          <div className="space-y-6">
             <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">Legal</h4>
-            <ul className="space-y-5 text-[11px] font-black text-zinc-500 uppercase italic">
-              <li><button onClick={() => setViewMode('legal')} className="hover:text-white transition-colors">Privacy Policy</button></li>
-              <li><button onClick={() => window.open('https://bgremoverai.online', '_blank')} className="text-zinc-400 hover:text-white underline underline-offset-8">Bg Remover (Free & No-Login)</button></li>
+            <ul className="space-y-4 text-[11px] font-black text-zinc-500 uppercase italic">
+              <li><button onClick={() => setViewMode('legal')} className="hover:text-white">Privacy Policy</button></li>
+              <li><button onClick={() => window.open('https://bgremoverai.online', '_blank')} className="text-zinc-400 hover:text-white underline underline-offset-4">Bg Remover (Free)</button></li>
             </ul>
           </div>
-          <div className="space-y-8 text-right flex flex-col items-end">
+          <div className="space-y-6 md:text-right flex flex-col items-start md:items-end">
              <div className="flex items-center gap-4 bg-zinc-900/50 px-6 py-3 rounded-2xl border border-zinc-800">
-                <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_15px_rgba(34,197,94,0.6)]"></div>
-                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">System Online</span>
+                <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-[10px] font-black text-zinc-400 uppercase">System Online</span>
              </div>
-             <p className={`text-[11px] font-black tracking-[0.6em] pt-10 ${hackerMode ? 'text-green-900' : 'text-zinc-800'}`}>CINEWISE 2026 // NO LOGIN REQUIRED</p>
+             <p className="text-[10px] font-black tracking-[0.6em] pt-6 text-zinc-800 uppercase">2026 // NO LOGIN REQUIRED</p>
           </div>
         </div>
       </footer>
 
-      {/* FEATURE MODALS */}
+      {/* MODALS */}
       {showPrank && <GhostFacePrank onClose={() => setShowPrank(false)} />}
       {showVibe && <VibeMatcher onClose={() => setShowVibe(false)} />}
       {showSpoiler && <SpoilerRoulette onClose={() => setShowSpoiler(false)} />}
       {showMirror && <CharacterMirror onClose={() => setShowMirror(false)} />}
-      {showBlindDate && <BlindDate movies={movies} onSelect={(m) => { setSelectedMovie(m); setShowBlindDate(false); }} onClose={() => setShowBlindDate(false)} />}
       <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
     </div>
   );
