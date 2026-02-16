@@ -138,7 +138,12 @@ const App: React.FC = () => {
     window.history.pushState({}, '', '/');
     document.title = 'CineWise - 2026 Trending Hollywood Updates';
   };
-
+const calculateCountdown = (date: string) => {
+    const diff = +new Date(date) - +new Date();
+    if (diff <= 0) return "Released";
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    return `${days} Days to Go`;
+  };
  const fetchData = useCallback(async (page: number = 1, type: 'trending' | 'popular' = 'trending') => {
     const endpoint = type === 'trending' 
       ? `${TMDB_BASE_URL}/trending/movie/day?api_key=${TMDB_API_KEY}&page=${page}`
@@ -209,17 +214,20 @@ const App: React.FC = () => {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
               {displayedMovies.map(m => (
-                <div key={m.id} onClick={() => handleOpenMovie(m)} className="relative group cursor-pointer transition-all hover:scale-105">
-                  <div className="aspect-[2/3] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-lg">
-                    <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:opacity-20 transition-opacity" alt={m.title} />
-                    <div className="absolute inset-0 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black">
-                      <span className="text-[10px] font-black uppercase italic">{m.title}</span>
-                    </div>
+             <div key={m.id} onClick={() => handleOpenMovie(m)} className="relative group cursor-pointer transition-all hover:scale-105">
+              <div className="aspect-[2/3] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-lg">
+                <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:opacity-20 transition-opacity" alt={m.title} />
+                <div className="absolute inset-0 flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black">
+                  <div className="flex flex-col gap-0.5 text-left">
+                    <span className="text-[10px] font-black uppercase italic leading-none">{m.title}
+                    <span className="text-[8px] text-red-500 font-bold tracking-widest uppercase">
+                      ⏳ {m.release_date ? calculateCountdown(m.release_date) : 'TBA 2026'}
+                    
                   </div>
                 </div>
-              ))}
-            </div>
-            {/* LOAD MORE BUTTON START */}
+             </div>
+          ))}
+           {/* LOAD MORE BUTTON START */}
             {!searchQuery && (
               <div className="flex justify-center mt-16 mb-10">
                 <button 
