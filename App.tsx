@@ -113,7 +113,7 @@ const App: React.FC = () => {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // SEO & URL Logic
+  // --- LOGIC: SEO & URL ---
   const handleOpenMovie = (movie: Movie) => {
     setSelectedMovie(movie);
     const slug = movie.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
@@ -151,7 +151,14 @@ const App: React.FC = () => {
     
     const res = await fetch(endpoint);
     const data = await res.json();
-    setMovies(prev => page === 1 ? data.results : [...prev, ...data.results]);
+    
+    let filteredResults = data.results;
+    if (viewMode === 'upcoming') {
+      const today = new Date().toISOString().split('T')[0];
+      filteredResults = data.results.filter((m: Movie) => m.release_date > today);
+    }
+
+    setMovies(prev => page === 1 ? filteredResults : [...prev, ...filteredResults]);
   }, [viewMode]);
 
   useEffect(() => {
@@ -167,6 +174,7 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen bg-zinc-950 text-white ${selectedMovie ? 'h-screen overflow-hidden' : ''}`}>
+      {/* --- HEADER --- */}
       <header className={`fixed top-0 w-full z-[100] transition-all duration-500 px-6 md:px-12 py-4 flex items-center justify-between ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/95 border-b border-zinc-900 backdrop-blur-xl' : 'bg-transparent'}`}>
         <div className="flex items-center gap-10">
           <h1 className="text-2xl font-black text-red-600 italic tracking-tighter cursor-pointer" onClick={() => {setViewMode('home'); setSearchQuery(''); handleCloseMovie();}}>CINEWISE</h1>
@@ -185,11 +193,12 @@ const App: React.FC = () => {
       {viewMode === 'disclaimer' ? (
         <div className="pt-32 px-6 max-w-4xl mx-auto min-h-screen animate-in fade-in duration-500">
           <h1 className="text-4xl font-black italic mb-6">DISCLAIMER & PRIVACY</h1>
-          <p className="text-zinc-400 italic leading-relaxed">CineWise is a movie discovery platform. All trailer content and movie data are served via official YouTube and TMDB APIs. We do not host copyrighted files on our servers.</p>
+          <p className="text-zinc-400 italic leading-relaxed">CineWise is a movie discovery platform. All trailer content and movie data are served via official YouTube and TMDB APIs. We do not host copyrighted files on our servers. This site is for educational and news purposes regarding 2026 cinema trends.</p>
           <button onClick={() => setViewMode('home')} className="mt-8 text-red-600 font-bold hover:underline">← BACK TO DISCOVERY</button>
         </div>
       ) : (
         <>
+          {/* --- HERO BANNER --- */}
           {!searchQuery && viewMode === 'home' && movies[0] && (
             <section className="relative h-[80vh] w-full flex items-center px-6 md:px-16 overflow-hidden">
               <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover" alt="Banner" />
@@ -201,6 +210,7 @@ const App: React.FC = () => {
             </section>
           )}
 
+          {/* --- MAIN GRID --- */}
           <main className="px-6 md:px-12 py-20 min-h-screen">
             <h2 className="text-xs font-black uppercase tracking-[0.3em] text-zinc-500 mb-8 flex items-center gap-4">
               {searchQuery ? 'Search Results' : viewMode === 'home' ? 'Trending Global' : viewMode === 'upcoming' ? 'Upcoming 2026' : 'Production News'}
@@ -224,6 +234,7 @@ const App: React.FC = () => {
               ))}
             </div>
 
+            {/* --- LOAD MORE --- */}
             {!searchQuery && (
               <div className="flex justify-center mt-16 mb-10">
                 <button 
@@ -238,8 +249,10 @@ const App: React.FC = () => {
         </>
       )}
 
+      {/* --- MODAL --- */}
       <MovieDetailModal movie={selectedMovie} onClose={handleCloseMovie} />
 
+      {/* --- FOOTER --- */}
       <footer className="py-12 bg-zinc-950 text-center border-t border-zinc-900">
         <div className="flex justify-center gap-8 text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4">
           <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600 transition-colors">Disclaimer</button>
