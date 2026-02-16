@@ -257,7 +257,6 @@ const App: React.FC = () => {
   const fetchData = useCallback(async (targetPage: number) => {
     let endpoint = `${TMDB_BASE_URL}/trending/movie/day?api_key=${TMDB_API_KEY}&page=${targetPage}`;
     
-    // FETCHING LOGIC - Filter for real future releases in upcoming mode
     if (viewMode === 'upcoming') {
       endpoint = `${TMDB_BASE_URL}/movie/upcoming?api_key=${TMDB_API_KEY}&page=${targetPage}&region=US`;
     } else if (viewMode === 'news') {
@@ -268,7 +267,7 @@ const App: React.FC = () => {
     const data = await res.json();
     let results = data.results || [];
 
-    // STRICT FILTER: Only future dates for Upcoming section
+    // STRICT FILTER FOR UPCOMING SECTION (ONLY FUTURE DATES)
     if (viewMode === 'upcoming') {
       const today = new Date().toISOString().split('T')[0];
       results = results.filter((m: Movie) => m.release_date > today);
@@ -363,11 +362,40 @@ const App: React.FC = () => {
       {showSpoiler && <SpoilerRoulette onClose={() => setShowSpoiler(false)} />}
       <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
 
-      <footer className="py-24 bg-zinc-950 text-center border-t border-zinc-900 mt-20">
-        <div className="flex justify-center gap-16 text-[11px] font-black uppercase tracking-[0.4em] text-zinc-700 mb-10">
-          <button onClick={() => window.open('https://bgremoverai.online', '_blank')} className="text-zinc-500 hover:text-white">Bg Remover (Free & No Login)</button>
+      {/* FULL RESTORED FOOTER */}
+      <footer className="py-24 bg-zinc-950 border-t border-zinc-900 mt-20">
+        <div className="max-w-7xl mx-auto px-10 grid md:grid-cols-4 gap-20">
+          <div className="space-y-8">
+            <h3 className="text-3xl font-black italic tracking-tighter text-red-600">CINEWISE</h3>
+            <p className="text-xs font-bold text-zinc-500 leading-relaxed uppercase">The decentralized database for high-vibe cinema. Data node powered by TMDB.</p>
+          </div>
+          <div className="space-y-6">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Navigation</h4>
+            <ul className="space-y-4 text-xs font-bold text-zinc-600 uppercase italic">
+              <li><button onClick={() => setViewMode('home')} className="hover:text-red-600 transition-colors">Discovery</button></li>
+              <li><button onClick={() => setViewMode('upcoming')} className="hover:text-red-600 transition-colors">Upcoming</button></li>
+              <li><button onClick={() => setViewMode('news')} className="hover:text-red-600 transition-colors">News Feed</button></li>
+            </ul>
+          </div>
+          <div className="space-y-6">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Resources</h4>
+            <ul className="space-y-4 text-xs font-bold text-zinc-600 uppercase italic">
+              <li><button onClick={() => window.open('https://bgremoverai.online', '_blank')} className="hover:text-white transition-colors">Remove BG (Free)</button></li>
+              <li><button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600 transition-colors">Legal Terms</button></li>
+              <li><button className="hover:text-red-600 transition-colors">DMCA Report</button></li>
+            </ul>
+          </div>
+          <div className="space-y-6">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Status</h4>
+            <div className="flex items-center gap-3">
+               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+               <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Global Node Active</span>
+            </div>
+          </div>
         </div>
-        <p className={`text-xs font-bold tracking-tighter ${hackerMode ? 'text-green-900' : 'text-zinc-800'}`}>CINEWISE &copy; 2026</p>
+        <div className="mt-20 pt-10 border-t border-zinc-900 text-center">
+           <p className={`text-[10px] font-black tracking-[0.5em] ${hackerMode ? 'text-green-900' : 'text-zinc-800'}`}>CINEWISE 2026 // NO LOGIN REQUIRED // FREE FOREVER</p>
+        </div>
       </footer>
     </div>
   );
