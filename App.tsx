@@ -214,14 +214,13 @@ const calculateCountdown = (date: string) => {
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
               {displayedMovies.map(m => (
-             <div key={m.id} onClick={() => handleOpenMovie(m)} className="relative group cursor-pointer transition-all hover:scale-105">
+            <div key={m.id} onClick={() => handleOpenMovie(m)} className="relative group cursor-pointer transition-all hover:scale-105">
               <div className="aspect-[2/3] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-lg">
                 <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:opacity-50 transition-opacity" alt={m.title} />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <span className="text-white font-medium px-4 py-2 bg-black/50 rounded-full backdrop-blur-sm">View Details</span>
                 </div>
               </div>
-            </div>
             </div>
           ))}
            {/* LOAD MORE BUTTON START */}
