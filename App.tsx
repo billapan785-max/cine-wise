@@ -34,56 +34,62 @@ const getImageUrl = (path: string, size: 'w92' | 'w185' | 'w500' | 'original' = 
   return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
 };
 
-// --- GHOST-FACE PRANK COMPONENT (NEW IDEA FOR USA) ---
-const GhostFacePrank: React.FC = () => {
+// --- GHOST-FACE PRANK OVERLAY (FOR USA AUDIENCE) ---
+const GhostFacePrank: React.FC<{onClose: () => void}> = ({onClose}) => {
   const [victimName, setVictimName] = useState('');
-  const [isCalling, setIsCalling] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'ringing' | 'talking'>('idle');
 
   const startPrank = () => {
-    if (!victimName) return alert("Ghostface needs a name...");
-    setIsCalling(true);
-    
-    // Scary Phone Ringing
+    if (!victimName) return alert("Who is the victim? Enter a name.");
+    setStatus('ringing');
     const ringtone = new Audio('https://www.soundjay.com/phone/phone-calling-1.mp3');
     ringtone.play();
 
     setTimeout(() => {
       ringtone.pause();
+      setStatus('talking');
       const msg = new SpeechSynthesisUtterance();
-      msg.text = `Hello... ${victimName}... I am standing right behind you. Do you like scary movies? I'm coming for you at moviebox dot shop!`;
+      msg.text = `Hello... ${victimName}... I am watching you from movie box dot shop. Do you like scary movies?`;
       msg.pitch = 0.1; 
-      msg.rate = 0.6;
+      msg.rate = 0.7;
       window.speechSynthesis.speak(msg);
-      setIsCalling(false);
-    }, 4500);
+      msg.onend = () => { setStatus('idle'); };
+    }, 4000);
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto mb-20 p-10 bg-gradient-to-br from-red-950/40 to-black rounded-[3rem] border-2 border-red-600/30 shadow-[0_0_50px_rgba(220,38,38,0.1)] relative overflow-hidden">
-      <div className="relative z-10 space-y-6">
-        <h3 className="text-3xl font-black italic text-red-600 uppercase tracking-tighter">Ghostface is Watching...</h3>
-        <p className="text-zinc-500 text-sm font-bold tracking-widest uppercase">Receive a personalized death call from 2026's most feared killer.</p>
-        <div className="flex flex-col md:flex-row gap-4">
-          <input 
-            type="text" 
-            placeholder="ENTER YOUR NAME..." 
-            className="flex-1 bg-black/50 border border-zinc-800 rounded-2xl py-5 px-8 text-white outline-none focus:border-red-600 transition-all font-bold"
-            value={victimName}
-            onChange={(e) => setVictimName(e.target.value)}
-          />
-          <button 
-            onClick={startPrank}
-            className="bg-red-600 text-white font-black px-12 py-5 rounded-2xl hover:bg-white hover:text-black transition-all shadow-2xl uppercase tracking-widest text-sm"
-          >
-            {isCalling ? 'RINGING...' : 'RECEIVE CALL'}
-          </button>
+    <div className="fixed inset-0 z-[400] bg-black/95 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in zoom-in duration-300">
+      <div className="w-full max-w-xl bg-zinc-950 border-2 border-red-600 rounded-[3.5rem] p-12 relative shadow-[0_0_100px_rgba(220,38,38,0.4)]">
+        <button onClick={onClose} className="absolute top-10 right-10 text-zinc-600 hover:text-white text-3xl transition-all">✕</button>
+        <div className="text-center space-y-10">
+          <div className="space-y-4">
+            <h3 className="text-5xl font-black italic text-red-600 uppercase tracking-tighter">Ghostface Terminal</h3>
+            <p className="text-zinc-500 text-[10px] font-black tracking-[0.5em] uppercase">Status: Connected to USA Node</p>
+          </div>
+          <div className="space-y-6">
+            <input 
+              type="text" 
+              placeholder="TARGET NAME..." 
+              className="w-full bg-zinc-900/50 border border-zinc-800 rounded-3xl py-6 px-10 text-white text-center text-xl outline-none focus:border-red-600 transition-all font-bold placeholder:text-zinc-700"
+              value={victimName}
+              onChange={(e) => setVictimName(e.target.value)}
+            />
+            <button 
+              onClick={startPrank}
+              disabled={status !== 'idle'}
+              className="w-full bg-red-600 text-white font-black py-8 rounded-3xl hover:scale-105 transition-all shadow-[0_20px_50px_rgba(220,38,38,0.3)] uppercase tracking-[0.3em] text-sm"
+            >
+              {status === 'idle' ? 'Establish Lethal Connection' : status === 'ringing' ? '📞 RINGING TARGET...' : '🔪 VICTIM IS LISTENING...'}
+            </button>
+          </div>
+          <p className="text-[9px] text-zinc-700 uppercase font-black tracking-widest leading-relaxed">Warning: This simulation uses localized AI voice synthesis for authorized entertainment only.</p>
         </div>
       </div>
     </div>
   );
 };
 
-// --- MOVIE DETAIL MODAL ---
+// --- MOVIE DETAIL MODAL (TRAILER + CAST + OTT) ---
 const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> = ({ movie, onClose }) => {
   const [videoKey, setVideoKey] = useState<string | null>(null);
   const [providers, setProviders] = useState<WatchProvider[]>([]);
@@ -92,25 +98,17 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
 
   useEffect(() => {
     if (movie) {
-      fetch(`${TMDB_BASE_URL}/movie/${movie.id}/videos?api_key=${TMDB_API_KEY}`)
-        .then(res => res.json())
-        .then(data => {
-          const trailer = data.results?.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
-          setVideoKey(trailer ? trailer.key : null);
-        });
-
-      fetch(`${TMDB_BASE_URL}/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`)
-        .then(res => res.json())
-        .then(data => {
-          const results = data.results?.US?.flatrate || data.results?.IN?.flatrate || [];
-          setProviders(results.slice(0, 3));
-        });
-
-      fetch(`${TMDB_BASE_URL}/movie/${movie.id}/credits?api_key=${TMDB_API_KEY}`)
-        .then(res => res.json())
-        .then(data => {
-          setCast(data.cast?.slice(0, 10) || []);
-        });
+      fetch(`${TMDB_BASE_URL}/movie/${movie.id}/videos?api_key=${TMDB_API_KEY}`).then(res => res.json()).then(data => {
+        const trailer = data.results?.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
+        setVideoKey(trailer ? trailer.key : null);
+      });
+      fetch(`${TMDB_BASE_URL}/movie/${movie.id}/watch/providers?api_key=${TMDB_API_KEY}`).then(res => res.json()).then(data => {
+        const results = data.results?.US?.flatrate || data.results?.IN?.flatrate || [];
+        setProviders(results.slice(0, 3));
+      });
+      fetch(`${TMDB_BASE_URL}/movie/${movie.id}/credits?api_key=${TMDB_API_KEY}`).then(res => res.json()).then(data => {
+        setCast(data.cast?.slice(0, 10) || []);
+      });
     } else {
       setVideoKey(null);
       setProviders([]);
@@ -131,17 +129,15 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
         <div className="flex flex-col">
           <div className="w-full bg-black aspect-video relative group">
             {showPlayer && videoKey ? (
-              <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${videoKey}?autoplay=1&rel=0&showinfo=0`} title={movie.title} frameBorder="0" allow="autoplay; encrypted-media" allowFullScreen></iframe>
+              <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${videoKey}?autoplay=1&rel=0`} title={movie.title} frameBorder="0" allow="autoplay; encrypted-media" allowFullScreen></iframe>
             ) : (
               <div className="relative w-full h-full overflow-hidden">
                 <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover opacity-50 group-hover:scale-110 transition-transform duration-[4000ms] ease-out" alt={movie.title} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-6">
-                  <div className="w-24 h-24 bg-red-600 rounded-full flex items-center justify-center animate-pulse">
+                  <div className="w-24 h-24 bg-red-600 rounded-full flex items-center justify-center animate-pulse shadow-[0_0_60px_rgba(220,38,38,0.5)]">
                      <i className="fa-solid fa-play text-3xl text-white ml-2"></i>
                   </div>
-                  <button onClick={() => setShowPlayer(true)} className="bg-white text-black px-12 py-5 rounded-2xl flex items-center gap-4 hover:bg-red-600 hover:text-white transition-all font-black text-xl tracking-tighter uppercase">
-                    Launch Official Trailer
-                  </button>
+                  <button onClick={() => setShowPlayer(true)} className="bg-white text-black px-12 py-5 rounded-2xl flex items-center gap-4 hover:bg-red-600 hover:text-white transition-all font-black text-xl tracking-tighter uppercase">Launch Official Trailer</button>
                 </div>
               </div>
             )}
@@ -165,15 +161,12 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
                  <div className="flex flex-wrap gap-4">
                   {providers.length > 0 ? providers.map(p => (
                     <img key={p.provider_id} src={getImageUrl(p.logo_path, 'w92')} className="w-14 h-14 rounded-2xl border border-zinc-700 shadow-xl hover:scale-110 transition-transform" alt={p.provider_name} />
-                  )) : <p className="text-xs text-zinc-600 font-bold uppercase italic">Check local listings for digital release</p>}
+                  )) : <p className="text-xs text-zinc-600 font-bold uppercase italic">Theater Release Only</p>}
                  </div>
               </div>
             </div>
-            
             <div className="space-y-10 border-t border-zinc-800/50 pt-12">
-              <h3 className="text-xs font-black uppercase tracking-[0.6em] text-red-600 flex items-center gap-8">
-                Main Production Cast <span className="h-px flex-1 bg-zinc-800"></span>
-              </h3>
+              <h3 className="text-xs font-black uppercase tracking-[0.6em] text-zinc-500 flex items-center gap-8">Main Cast <span className="h-px flex-1 bg-zinc-800"></span></h3>
               <div className="flex gap-10 overflow-x-auto pb-8 scrollbar-hide snap-x">
                 {cast.map(person => (
                   <div key={person.id} className="flex-shrink-0 w-32 md:w-44 text-center space-y-5 group/actor snap-center">
@@ -203,18 +196,17 @@ const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showPrank, setShowPrank] = useState(false);
 
   const handleOpenMovie = (m: Movie) => {
     setSelectedMovie(m);
     const slug = m.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
     window.history.pushState({ movieId: m.id }, '', `/${slug}`);
-    document.title = `${m.title} (2026) - Full Cast, Trailer & Info | CineWise`;
   };
 
   const handleCloseMovie = () => {
     setSelectedMovie(null);
     window.history.pushState({}, '', '/');
-    document.title = 'CineWise - 2026 Hollywood Trend Discovery Platform';
   };
 
   const calculateCountdown = (date: string) => {
@@ -225,19 +217,13 @@ const App: React.FC = () => {
   };
 
   const fetchData = useCallback(async (targetPage: number) => {
-    let endpoint = "";
-    if (viewMode === 'home') endpoint = `${TMDB_BASE_URL}/trending/movie/day?api_key=${TMDB_API_KEY}&page=${targetPage}`;
+    let endpoint = `${TMDB_BASE_URL}/trending/movie/day?api_key=${TMDB_API_KEY}&page=${targetPage}`;
+    if (viewMode === 'upcoming') endpoint = `${TMDB_BASE_URL}/movie/upcoming?api_key=${TMDB_API_KEY}&page=${targetPage}`;
     else if (viewMode === 'news') endpoint = `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=${targetPage}`;
-    else if (viewMode === 'upcoming') endpoint = `${TMDB_BASE_URL}/movie/upcoming?api_key=${TMDB_API_KEY}&page=${targetPage}`;
     
     const res = await fetch(endpoint);
     const data = await res.json();
     let results = data.results || [];
-
-    if (viewMode === 'upcoming') {
-      const today = new Date().toISOString().split('T')[0];
-      results = results.filter((m: Movie) => m.release_date > today);
-    }
 
     setMovies(prev => {
       const movieMap = new Map();
@@ -255,29 +241,31 @@ const App: React.FC = () => {
   }, [fetchData]);
 
   return (
-    <div className={`min-h-screen bg-zinc-950 text-white selection:bg-red-600 selection:text-white ${selectedMovie ? 'h-screen overflow-hidden' : ''}`}>
+    <div className={`min-h-screen bg-zinc-950 text-white selection:bg-red-600 ${selectedMovie ? 'h-screen overflow-hidden' : ''}`}>
       <header className={`fixed top-0 w-full z-[100] transition-all duration-1000 px-6 md:px-20 py-8 flex items-center justify-between ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/90 border-b border-zinc-900 backdrop-blur-3xl py-5' : 'bg-transparent'}`}>
         <div className="flex items-center gap-16">
-          <h1 className="text-4xl font-black text-red-600 italic tracking-tighter cursor-pointer hover:scale-105 transition-transform" onClick={() => {setViewMode('home'); setPage(1); handleCloseMovie();}}>CINEWISE</h1>
+          <h1 className="text-4xl font-black text-red-600 italic tracking-tighter cursor-pointer" onClick={() => {setViewMode('home'); handleCloseMovie();}}>CINEWISE</h1>
           <nav className="hidden lg:flex gap-10 text-[11px] font-black uppercase tracking-[0.3em]">
-            <button onClick={() => {setViewMode('home'); setPage(1);}} className={viewMode === 'home' ? 'text-white border-b-2 border-red-600' : 'text-zinc-600 hover:text-white'}>Discovery</button>
-            <button onClick={() => {setViewMode('upcoming'); setPage(1);}} className={viewMode === 'upcoming' ? 'text-white border-b-2 border-red-600' : 'text-zinc-600 hover:text-white'}>Coming 2026</button>
-            <button onClick={() => {setViewMode('news'); setPage(1);}} className={viewMode === 'news' ? 'text-white border-b-2 border-red-600' : 'text-zinc-600 hover:text-white'}>Industry News</button>
+            <button onClick={() => setViewMode('home')} className={viewMode === 'home' ? 'text-white border-b-2 border-red-600' : 'text-zinc-600'}>Discovery</button>
+            <button onClick={() => setViewMode('upcoming')} className={viewMode === 'upcoming' ? 'text-white border-b-2 border-red-600' : 'text-zinc-600'}>Coming 2026</button>
+            <button onClick={() => setViewMode('news')} className={viewMode === 'news' ? 'text-white border-b-2 border-red-600' : 'text-zinc-600'}>Industry News</button>
           </nav>
         </div>
-        <div className="relative">
-           <input type="text" placeholder="GLOBAL DATABASE SEARCH..." className="bg-zinc-900/60 border border-zinc-800 rounded-full py-4 px-14 text-[11px] w-64 md:w-[28rem] outline-none focus:ring-2 focus:ring-red-600/40 transition-all font-bold" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-           <i className="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-zinc-600 text-sm"></i>
+        
+        <div className="flex items-center gap-8">
+          <button onClick={() => setShowPrank(true)} className="bg-red-600 px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse hover:bg-white hover:text-red-600 transition-all shadow-[0_0_30px_rgba(220,38,38,0.5)] border-2 border-red-600">💀 Scream Prank</button>
+          <div className="relative">
+             <input type="text" placeholder="GLOBAL SEARCH..." className="bg-zinc-900/60 border border-zinc-800 rounded-full py-4 px-14 text-[11px] w-64 md:w-[22rem] outline-none focus:ring-2 focus:ring-red-600/40 transition-all font-bold" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+             <i className="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-zinc-600 text-sm"></i>
+          </div>
         </div>
       </header>
 
       {viewMode === 'disclaimer' ? (
-        <div className="pt-48 px-6 max-w-6xl mx-auto min-h-screen space-y-16 animate-in slide-in-from-bottom-10 duration-1000">
-          <h1 className="text-7xl md:text-9xl font-black italic tracking-tighter text-white">LEGAL & PRIVACY</h1>
-          <div className="space-y-10 text-2xl text-zinc-500 font-light italic leading-relaxed border-l-4 border-red-600 pl-10">
-            <p>CineWise is a next-generation cinema intelligence platform. We provide metadata via TMDB. Our site does not host copyrighted files.</p>
-          </div>
-          <button onClick={() => setViewMode('home')} className="bg-white text-black px-16 py-6 rounded-2xl font-black text-sm hover:bg-red-600 hover:text-white transition-all shadow-2xl uppercase tracking-widest">Return to Database</button>
+        <div className="pt-48 px-6 max-w-6xl mx-auto min-h-screen space-y-10">
+          <h1 className="text-7xl md:text-9xl font-black italic text-white">LEGAL</h1>
+          <p className="text-2xl text-zinc-500 italic">CineWise provides metadata and trailers via TMDB & YouTube APIs. We do not host copyrighted video content.</p>
+          <button onClick={() => setViewMode('home')} className="bg-white text-black px-12 py-5 rounded-2xl font-black uppercase tracking-widest">Return</button>
         </div>
       ) : (
         <>
@@ -286,17 +274,14 @@ const App: React.FC = () => {
               <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover opacity-40 blur-[2px] scale-105" alt="Feature" />
               <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/20 to-transparent"></div>
               <div className="relative max-w-5xl space-y-10">
-                <span className="bg-red-600 text-[11px] font-black px-6 py-2 rounded-full tracking-[0.4em] uppercase">Breaking 2026 Update</span>
-                <h2 className="text-7xl md:text-[10rem] font-black italic uppercase tracking-tighter leading-[0.85] text-white">{movies[0].title}</h2>
-                <button onClick={() => handleOpenMovie(movies[0])} className="bg-white text-black font-black px-16 py-6 rounded-[2rem] hover:bg-red-600 hover:text-white transition-all shadow-[0_0_50px_rgba(255,255,255,0.1)] text-sm tracking-widest uppercase">Explore This Title</button>
+                <span className="bg-red-600 text-[11px] font-black px-6 py-2 rounded-full tracking-[0.4em] uppercase shadow-2xl">Breaking 2026 Update</span>
+                <h2 className="text-7xl md:text-[10rem] font-black italic uppercase tracking-tighter leading-[0.85] text-white drop-shadow-2xl">{movies[0].title}</h2>
+                <button onClick={() => handleOpenMovie(movies[0])} className="bg-white text-black font-black px-16 py-6 rounded-[2rem] hover:bg-red-600 hover:text-white transition-all text-sm tracking-widest uppercase">Explore This Title</button>
               </div>
             </section>
           )}
 
           <main className="px-6 md:px-20 py-32 min-h-screen">
-            {/* PRANK SECTION FOR USA AUDIENCE */}
-            {!searchQuery && viewMode === 'home' && <GhostFacePrank />}
-
             <h2 className="text-[12px] font-black uppercase tracking-[0.5em] text-zinc-700 mb-20 flex items-center gap-10">
               {viewMode === 'home' ? 'Trending Discovery' : viewMode === 'upcoming' ? '2026 Roadmap' : 'Production Feeds'} <span className="h-px flex-1 bg-zinc-900/50"></span>
             </h2>
@@ -315,24 +300,22 @@ const App: React.FC = () => {
             </div>
             {!searchQuery && (
               <div className="flex justify-center mt-32">
-                <button onClick={() => fetchData(page + 1)} className="group bg-zinc-900 hover:bg-white hover:text-black border border-zinc-800 text-white font-black px-20 py-7 rounded-[2.5rem] transition-all text-xs tracking-[0.4em] shadow-2xl active:scale-95 flex items-center gap-4 uppercase">
-                  Explore More <i className="fa-solid fa-chevron-down group-hover:translate-y-1 transition-transform"></i>
-                </button>
+                <button onClick={() => fetchData(page + 1)} className="bg-zinc-900 hover:bg-white hover:text-black border border-zinc-800 text-white font-black px-20 py-7 rounded-[2.5rem] transition-all text-xs tracking-[0.4em] uppercase shadow-2xl">Explore More Titles</button>
               </div>
             )}
           </main>
         </>
       )}
 
+      {showPrank && <GhostFacePrank onClose={() => setShowPrank(false)} />}
       <MovieDetailModal movie={selectedMovie} onClose={handleCloseMovie} />
 
       <footer className="py-24 bg-zinc-950 text-center border-t border-zinc-900 mt-20">
         <div className="flex justify-center gap-16 text-[11px] font-black uppercase tracking-[0.4em] text-zinc-700 mb-10">
           <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600 transition-colors">Legal</button>
-          <button onClick={() => setViewMode('disclaimer')} className="hover:text-red-600 transition-colors">Privacy</button>
           <button className="hover:text-red-600 transition-colors">DMCA</button>
         </div>
-        <p className="text-xs text-zinc-800 font-bold tracking-tighter">CINEWISE &copy; 2026 - THE ULTIMATE CINEMA DATABASE</p>
+        <p className="text-xs text-zinc-800 font-bold tracking-tighter">CINEWISE &copy; 2026 - POWERED BY TMDB</p>
       </footer>
     </div>
   );
