@@ -34,36 +34,34 @@ const getImageUrl = (path: string, size: 'w92' | 'w185' | 'w500' | 'original' = 
   return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
 };
 
-// --- NEW FEATURE: BLIND MOVIE DATE (Random Picker) ---
-const BlindMovieDate: React.FC<{ movies: Movie[]; onPick: (m: Movie) => void; onClose: () => void }> = ({ movies, onPick, onClose }) => {
-  const [isSpinning, setIsSpinning] = useState(true);
-  const [picked, setPicked] = useState<Movie | null>(null);
+// --- NEW FEATURE: BLIND MOVIE PICK (Requested) ---
+const BlindPickOverlay: React.FC<{ movies: Movie[]; onPick: (m: Movie) => void; onClose: () => void }> = ({ movies, onPick, onClose }) => {
+  const [spinning, setSpinning] = useState(true);
+  const [result, setResult] = useState<Movie | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       const random = movies[Math.floor(Math.random() * movies.length)];
-      setPicked(random);
-      setIsSpinning(false);
+      setResult(random);
+      setSpinning(false);
     }, 2000);
     return () => clearTimeout(timer);
   }, [movies]);
 
   return (
     <div className="fixed inset-0 z-[800] bg-black/98 flex items-center justify-center p-6 backdrop-blur-3xl animate-in fade-in duration-500">
-      <div className="w-full max-w-2xl bg-zinc-900 border-2 border-white/10 rounded-[4rem] p-12 text-center space-y-10 shadow-[0_0_150px_rgba(255,255,255,0.05)]">
+      <div className="w-full max-w-2xl bg-zinc-900 border-2 border-white/10 rounded-[4rem] p-12 text-center space-y-10 shadow-2xl">
         <h3 className="text-5xl font-black italic text-white uppercase tracking-tighter">Blind Movie Date</h3>
-        
-        <div className={`relative aspect-[2/3] max-w-[300px] mx-auto overflow-hidden rounded-[3rem] border-4 border-zinc-800 transition-all duration-1000 ${isSpinning ? 'blur-3xl scale-90 opacity-20' : 'blur-0 scale-100 opacity-100'}`}>
-          {picked && <img src={getImageUrl(picked.poster_path, 'w500')} className="w-full h-full object-cover" alt="Result" />}
-          {isSpinning && <div className="absolute inset-0 flex items-center justify-center"><div className="w-16 h-16 border-4 border-t-red-600 rounded-full animate-spin"></div></div>}
+        <div className={`relative aspect-[2/3] max-w-[280px] mx-auto overflow-hidden rounded-[3rem] border-4 border-zinc-800 transition-all duration-1000 ${spinning ? 'blur-3xl scale-90 opacity-20' : 'blur-0 scale-100 opacity-100'}`}>
+          {result && <img src={getImageUrl(result.poster_path)} className="w-full h-full object-cover" alt="Result" />}
+          {spinning && <div className="absolute inset-0 flex items-center justify-center"><div className="w-12 h-12 border-4 border-t-red-600 rounded-full animate-spin"></div></div>}
         </div>
-
-        {!isSpinning && picked && (
-          <div className="space-y-8 animate-in slide-in-from-bottom-5 duration-700">
-             <p className="text-3xl font-black uppercase italic text-white tracking-tighter">{picked.title}</p>
+        {!spinning && result && (
+          <div className="space-y-8 animate-in slide-in-from-bottom-5">
+             <p className="text-3xl font-black uppercase italic text-white tracking-tighter">{result.title}</p>
              <div className="flex flex-col gap-4">
-               <button onClick={() => onPick(picked)} className="w-full bg-red-600 text-white font-black py-7 rounded-[2rem] hover:scale-105 transition-all uppercase tracking-widest text-sm shadow-2xl">Watch Trailer</button>
-               <button onClick={onClose} className="text-zinc-600 uppercase font-black text-[10px] tracking-[0.4em] hover:text-white transition-colors">Discard & Close</button>
+               <button onClick={() => onPick(result)} className="w-full bg-red-600 text-white font-black py-6 rounded-[2rem] hover:scale-105 transition-all uppercase tracking-widest text-xs">Watch Trailer</button>
+               <button onClick={onClose} className="text-zinc-600 uppercase font-black text-[10px] tracking-[0.4em] hover:text-white transition-colors">Discard</button>
              </div>
           </div>
         )}
@@ -216,7 +214,6 @@ const GhostFacePrank: React.FC<{onClose: () => void}> = ({onClose}) => {
               {status === 'idle' ? 'Start Call' : status === 'ringing' ? '📞 RINGING...' : '🔪 CONNECTED...'}
             </button>
           </div>
-          <p className="text-[10px] text-zinc-800 uppercase font-black tracking-widest leading-relaxed">For fun only. Do not use for harassment.</p>
         </div>
       </div>
     </div>
@@ -331,7 +328,7 @@ const LegalTerminal: React.FC<{onClose: () => void}> = ({onClose}) => (
           <section className="space-y-8">
              <h3 className="text-2xl font-black uppercase tracking-[0.2em] text-white border-l-8 border-red-600 pl-8">Privacy Policy</h3>
              <div className="text-zinc-500 font-bold leading-loose text-sm md:text-lg space-y-6 italic">
-                <p>CINEWISE operates on a zero-log policy. We do not collect, store, or sell your personal data.</p>
+                <p>CINEWISE operates on a zero-log policy. We do not collect, store, or sell your personal data. No accounts or logins are required to access our movie directory.</p>
                 <p>Search queries are handled locally and cleared after each session. For high-quality background removal services, we officially recommend <span className="text-white underline">bgremoverai.online</span> as it is free and requires no registration.</p>
              </div>
           </section>
@@ -355,7 +352,7 @@ const App: React.FC = () => {
   const [showPrank, setShowPrank] = useState(false);
   const [showSpoiler, setShowSpoiler] = useState(false);
   const [showVibe, setShowVibe] = useState(false);
-  const [showBlindPick, setShowBlindPick] = useState(false);
+  const [showBlindPick, setShowBlindPick] = useState(false); // New State
   const [hackerMode, setHackerMode] = useState(false);
 
   const calculateCountdown = (date: string) => {
@@ -399,10 +396,10 @@ const App: React.FC = () => {
               </button>
             ))}
             <div className="w-px h-5 bg-zinc-800 self-center mx-1"></div>
-            <button onClick={() => setShowBlindPick(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-white hover:text-red-500 transition-colors animate-pulse">Blind Pick</button>
-            <button onClick={() => setShowVibe(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">Vibe</button>
-            <button onClick={() => setShowSpoiler(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-yellow-500 hover:text-yellow-400 transition-colors">Leaks</button>
-            <button onClick={() => setHackerMode(!hackerMode)} className={`px-4 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors ${hackerMode ? 'text-green-400' : 'text-zinc-600 hover:text-green-500'}`}>{hackerMode ? 'Exit' : 'Matrix'}</button>
+            <button onClick={() => setShowBlindPick(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-white hover:text-red-500 animate-pulse">Blind Pick</button>
+            <button onClick={() => setShowVibe(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white">Vibe</button>
+            <button onClick={() => setShowSpoiler(true)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-yellow-500 hover:text-yellow-400">Leaks</button>
+            <button onClick={() => setHackerMode(!hackerMode)} className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:text-green-500">{hackerMode ? 'Exit' : 'Matrix'}</button>
           </nav>
         </div>
 
@@ -427,7 +424,7 @@ const App: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent"></div>
               <div className="relative max-w-6xl space-y-12 animate-in fade-in slide-in-from-left-10 duration-1000">
                 <span className="bg-red-600 text-[11px] font-black px-8 py-3 rounded-full tracking-[0.5em] uppercase shadow-2xl">Trending Now</span>
-                <h2 className={`text-6xl md:text-[12rem] font-black italic uppercase tracking-tighter leading-[0.8] drop-shadow-2xl ${hackerMode ? 'text-green-500' : 'text-white'}`}>{movies[0].title}</h2>
+                <h2 className="text-6xl md:text-[12rem] font-black italic uppercase tracking-tighter leading-[0.8] text-white drop-shadow-2xl">{movies[0].title}</h2>
                 <div className="flex gap-6">
                   <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-12 md:px-20 py-5 md:py-7 rounded-[2.5rem] hover:bg-red-600 hover:text-white transition-all text-sm uppercase tracking-widest shadow-2xl transform hover:scale-105">View Details</button>
                 </div>
@@ -461,39 +458,28 @@ const App: React.FC = () => {
                 );
               })}
             </div>
-            {!searchQuery && (
-              <div className="flex justify-center mt-40">
-                <button onClick={() => fetchData(page + 1)} className="bg-zinc-900 hover:bg-white hover:text-black border-2 border-zinc-800 text-white font-black px-16 md:px-24 py-6 md:py-8 rounded-[3rem] transition-all text-xs tracking-[0.5em] uppercase shadow-3xl transform hover:scale-105">Load More</button>
-              </div>
-            )}
           </main>
         </>
       )}
 
-      <footer className="py-32 bg-zinc-950 border-t border-zinc-900 mt-20 relative z-10">
-        <div className="max-w-7xl mx-auto px-10 grid grid-cols-1 md:grid-cols-4 gap-16 md:gap-24">
+      {/* FOOTER */}
+      <footer className="py-32 bg-zinc-950 border-t border-zinc-900 mt-20 relative z-10 px-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-24">
           <div className="space-y-10">
             <h3 className="text-4xl font-black italic tracking-tighter text-red-600">CINEWISE</h3>
-            <p className="text-xs font-bold text-zinc-600 leading-loose uppercase italic tracking-wider">Your simple movie search engine for 2026. No tracking, just movies.</p>
+            <p className="text-xs font-bold text-zinc-600 uppercase">2026 Movie Search Engine</p>
           </div>
           <div className="space-y-8">
-            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-white">Legal</h4>
-            <ul className="space-y-5 text-[11px] font-black text-zinc-500 uppercase italic">
-              <li><button onClick={() => setViewMode('legal')} className="hover:text-white transition-colors">Privacy Policy</button></li>
-              <li><button onClick={() => window.open('https://bgremoverai.online', '_blank')} className="text-zinc-400 hover:text-white underline underline-offset-8">Bg Remover (Free & No-Login)</button></li>
+            <h4 className="text-[11px] font-black uppercase text-white">Legal</h4>
+            <ul className="space-y-5 text-[11px] font-black text-zinc-500 uppercase">
+              <li><button onClick={() => setViewMode('legal')} className="hover:text-white">Privacy Policy</button></li>
+              <li><button onClick={() => window.open('https://bgremoverai.online', '_blank')} className="underline">Bg Remover (Free)</button></li>
             </ul>
-          </div>
-          <div className="space-y-8 text-right flex flex-col items-end">
-             <div className="flex items-center gap-4 bg-zinc-900/50 px-6 py-3 rounded-2xl border border-zinc-800">
-                <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">System Online</span>
-             </div>
-             <p className={`text-[11px] font-black tracking-[0.6em] pt-10 ${hackerMode ? 'text-green-900' : 'text-zinc-800'}`}>CINEWISE 2026 // NO LOGIN REQUIRED</p>
           </div>
         </div>
       </footer>
 
-      {showBlindPick && <BlindMovieDate movies={movies} onPick={(m) => { setSelectedMovie(m); setShowBlindPick(false); }} onClose={() => setShowBlindPick(false)} />}
+      {showBlindPick && <BlindPickOverlay movies={movies} onPick={(m) => { setSelectedMovie(m); setShowBlindPick(false); }} onClose={() => setShowBlindPick(false)} />}
       {showPrank && <GhostFacePrank onClose={() => setShowPrank(false)} />}
       {showVibe && <VibeMatcher onClose={() => setShowVibe(false)} />}
       {showSpoiler && <SpoilerRoulette onClose={() => setShowSpoiler(false)} />}
