@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 // Fix: Import Movie from shared types to avoid mismatch with MovieDetailModal
 import { Movie } from './types';
-import MovieDetailModal from './MovieDetailModal';
+import MovieDetailModal from './components/MovieDetailModal';
 
 // --- TYPES & INTERFACES ---
 interface CastMember {
@@ -535,9 +535,6 @@ const App: React.FC = () => {
       />
 
       <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
-      
-      {/* Skimlinks Script Injection */}
-      <script type="text/javascript" src="https://s.skimresources.com/js/298886X178650.js"></script>
     </div>
   );
 };
