@@ -10,7 +10,6 @@ export interface Movie {
   backdrop_path: string;
   release_date: string;
   vote_average: number;
-  genre_ids: number[];
 }
 
 export interface VideoResult {
@@ -20,30 +19,30 @@ export interface VideoResult {
   official: boolean;
 }
 
+interface CastMember {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string;
+}
+
+interface WatchProvider {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string;
+}
+
 // --- CONFIGURATION ---
 const TMDB_API_KEY = 'cfedd233fe8494b29646beabc505d193';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
-// --- INLINED SERVICES (TMDB) ---
+// --- INLINED SERVICES ---
 const getImageUrl = (path: string, size: 'w92' | 'w185' | 'w500' | 'original' = 'w500') => {
   if (!path) return 'https://images.unsplash.com/photo-1634157703702-3c124b455499?q=80&w=200&auto=format&fit=crop';
   return `${TMDB_IMAGE_BASE_URL}/${size}${path}`;
 };
 
-const getRecommendations = async (movieId: number): Promise<Movie[]> => {
-  const res = await fetch(`${TMDB_BASE_URL}/movie/${movieId}/recommendations?api_key=${TMDB_API_KEY}`);
-  const data = await res.json();
-  return data.results?.slice(0, 6) || [];
-};
-
-const getMovieVideos = async (movieId: number): Promise<VideoResult[]> => {
-  const res = await fetch(`${TMDB_BASE_URL}/movie/${movieId}/videos?api_key=${TMDB_API_KEY}`);
-  const data = await res.json();
-  return data.results || [];
-};
-
-// --- INLINED SERVICES (GEMINI AI) ---
 const getMovieCritique = async (movieTitle: string, overview: string): Promise<string> => {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -57,7 +56,6 @@ const getMovieCritique = async (movieTitle: string, overview: string): Promise<s
   }
 };
 
-// --- INLINED SERVICES (SEO) ---
 const updateMetaTags = (title: string, description: string, image: string, url: string) => {
   document.title = title;
   const setMeta = (property: string, content: string, isProperty = false) => {
@@ -76,138 +74,6 @@ const updateMetaTags = (title: string, description: string, image: string, url: 
   setMeta('og:description', description, true);
   setMeta('og:image', image, true);
   setMeta('og:url', url, true);
-};
-
-const updateCanonical = (path: string = '') => {
-  const link = document.getElementById('canonical-link') as HTMLLinkElement;
-  if (link) link.href = `https://cinewise.ai/${path}`;
-};
-
-const injectBreadcrumbs = (items: { name: string, item: string }[]) => {
-  let script = document.getElementById('breadcrumbs-json-ld') as HTMLScriptElement;
-  if (!script) {
-    script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.id = 'breadcrumbs-json-ld';
-    document.head.appendChild(script);
-  }
-  const breadcrumbs = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": items.map((it, idx) => ({
-      "@type": "ListItem",
-      "position": idx + 1,
-      "name": it.name,
-      "item": `https://cinewise.ai${it.item}`
-    }))
-  };
-  script.text = JSON.stringify(breadcrumbs);
-};
-
-// --- COMPONENT: MovieDetailModal ---
-const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> = ({ movie, onClose }) => {
-  const [critique, setCritique] = useState<string>('');
-  const [loadingCritique, setLoadingCritique] = useState(false);
-  const [loadingVideo, setLoadingVideo] = useState(false);
-  const [trailerKey, setTrailerKey] = useState<string | null>(null);
-  const [showTrailer, setShowTrailer] = useState(false);
-
-  useEffect(() => {
-    if (movie) {
-      const originalTitle = document.title;
-      const movieYear = movie.release_date ? new Date(movie.release_date).getFullYear() : 'N/A';
-      const safeTitle = movie.title || 'Unknown Title';
-      const movieSlug = safeTitle.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
-      const movieUrlPath = `movie/${movie.id}-${movieSlug}`;
-      const movieFullTitle = `${safeTitle} (${movieYear}) - Watch on CineWise`;
-
-      updateMetaTags(movieFullTitle, (movie.overview || '').substring(0, 160), getImageUrl(movie.poster_path, 'w500'), `https://cinewise.ai/${movieUrlPath}`);
-      updateCanonical(movieUrlPath);
-      injectBreadcrumbs([{ name: 'Home', item: '/' }, { name: 'Movies', item: '/movies' }, { name: safeTitle, item: `/${movieUrlPath}` }]);
-
-      setLoadingCritique(true);
-      getMovieCritique(safeTitle, movie.overview || '').then(text => { setCritique(text); setLoadingCritique(false); });
-
-      setLoadingVideo(true);
-      getMovieVideos(movie.id).then((videos) => {
-        const bestTrailer = videos.find(v => v.site === 'YouTube' && v.type === 'Trailer') || videos[0];
-        setTrailerKey(bestTrailer ? bestTrailer.key : null);
-        setLoadingVideo(false);
-      });
-
-      return () => { document.title = originalTitle; };
-    }
-  }, [movie]);
-
-  if (!movie) return null;
-
-  return (
-    <div className="fixed inset-0 z-[500] flex items-center justify-center p-0 md:p-4 bg-zinc-950 animate-in fade-in duration-300">
-      {showTrailer && trailerKey && (
-        <div className="fixed inset-0 z-[700] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-4">
-          <button onClick={() => setShowTrailer(false)} className="absolute top-6 right-6 bg-zinc-800 hover:bg-red-600 w-12 h-12 rounded-full flex items-center justify-center text-white transition-colors"><i className="fa-solid fa-xmark text-2xl"></i></button>
-          <div className="w-full max-w-5xl aspect-video rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 bg-black">
-            <iframe className="w-full h-full" src={`https://www.youtube-nocookie.com/embed/${trailerKey}?autoplay=1`} frameBorder="0" allowFullScreen></iframe>
-          </div>
-        </div>
-      )}
-
-      <div className="relative w-full h-full overflow-y-auto bg-zinc-950 scrollbar-hide">
-        <button onClick={onClose} className="fixed top-6 left-6 md:top-8 md:left-8 z-[60] bg-black/60 hover:bg-red-600 w-12 h-12 rounded-full flex items-center justify-center text-white"><i className="fa-solid fa-arrow-left"></i></button>
-
-        <div className="relative h-[45vh] md:h-[70vh] w-full">
-          <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover" alt={movie.title} />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent"></div>
-          <div className="absolute bottom-0 left-0 p-8 md:p-16 w-full">
-            <h1 className="text-4xl md:text-8xl font-black mb-6 uppercase italic leading-none">{movie.title}</h1>
-            <div className="flex gap-6 text-sm font-bold">
-              <span className="text-green-500 bg-green-500/10 px-3 py-1 rounded-md">{Math.round(movie.vote_average * 10)}% Match</span>
-              <span className="text-zinc-300">{movie.release_date ? new Date(movie.release_date).getFullYear() : ''}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-8 md:p-16 grid grid-cols-1 lg:grid-cols-3 gap-16">
-          <div className="lg:col-span-2 space-y-12">
-            <div className="space-y-6">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500">Story Overview</h3>
-              <p className="text-xl md:text-3xl text-zinc-100 leading-snug font-light italic">"{movie.overview}"</p>
-            </div>
-            
-            {/* DYNAMIC MERCH BUTTON */}
-            <div className="space-y-6">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500">Merch</h3>
-              <a 
-                href={`https://www.redbubble.com/shop/${movie.title.replace(/\s+/g, '+')}+t-shirts`} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="block w-full bg-[#EAB308] text-black font-black py-5 rounded-2xl text-center text-sm uppercase tracking-widest hover:scale-[1.02] transition-transform flex items-center justify-center gap-3 shadow-xl"
-              >
-                <i className="fa-solid fa-shirt"></i>
-                Get Movie Merch
-              </a>
-            </div>
-
-            <div className="p-8 rounded-3xl bg-zinc-900/50 border border-zinc-800">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-500 mb-4">AI Analysis</h4>
-              {loadingCritique ? <div className="h-8 w-2/3 bg-zinc-800 animate-pulse rounded-lg"></div> : <p className="text-2xl font-bold">"{critique}"</p>}
-            </div>
-          </div>
-
-          <div className="space-y-8">
-             <button onClick={() => trailerKey && setShowTrailer(true)} disabled={!trailerKey} className={`w-full py-5 rounded-2xl font-black text-sm uppercase tracking-widest ${!trailerKey ? 'bg-zinc-800 text-zinc-500' : 'bg-red-600 text-white hover:bg-red-700'}`}>
-                {loadingVideo ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-play mr-3"></i>}
-                Watch Trailer
-             </button>
-             <div className="bg-zinc-900/60 p-8 rounded-3xl border border-zinc-800">
-                <span className="text-zinc-500 text-[10px] font-black uppercase tracking-widest block mb-4">Rating</span>
-                <span className="text-4xl font-black">{movie.vote_average.toFixed(1)} <span className="text-zinc-700 text-xl">/ 10</span></span>
-             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 // --- COMPONENT: MatrixRain ---
@@ -239,6 +105,109 @@ const MatrixRain: React.FC = () => {
   return <canvas ref={canvasRef} className="fixed inset-0 z-0 opacity-20 pointer-events-none" />;
 };
 
+// --- COMPONENT: MovieDetailModal ---
+const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> = ({ movie, onClose }) => {
+  const [videoKey, setVideoKey] = useState<string | null>(null);
+  const [cast, setCast] = useState<CastMember[]>([]);
+  const [critique, setCritique] = useState<string>('');
+  const [loadingCritique, setLoadingCritique] = useState(false);
+  const [showPlayer, setShowPlayer] = useState(false);
+
+  useEffect(() => {
+    if (movie) {
+      const originalTitle = document.title;
+      updateMetaTags(`${movie.title} - CineWise`, movie.overview, getImageUrl(movie.poster_path), `https://cinewise.ai/movie/${movie.id}`);
+      
+      setLoadingCritique(true);
+      getMovieCritique(movie.title, movie.overview).then(text => { setCritique(text); setLoadingCritique(false); });
+
+      fetch(`${TMDB_BASE_URL}/movie/${movie.id}/videos?api_key=${TMDB_API_KEY}`).then(res => res.json()).then(data => {
+        const trailer = data.results?.find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
+        setVideoKey(trailer ? trailer.key : null);
+      });
+      fetch(`${TMDB_BASE_URL}/movie/${movie.id}/credits?api_key=${TMDB_API_KEY}`).then(res => res.json()).then(data => {
+        setCast(data.cast?.slice(0, 10) || []);
+      });
+      return () => { document.title = originalTitle; };
+    }
+  }, [movie]);
+
+  if (!movie) return null;
+
+  return (
+    <div className="fixed inset-0 z-[500] bg-zinc-950/98 backdrop-blur-3xl overflow-y-auto animate-in fade-in duration-300">
+      <div className="relative w-full max-w-6xl mx-auto bg-zinc-900 md:rounded-[4rem] overflow-hidden border border-zinc-800 shadow-2xl my-0 md:my-10">
+        <button onClick={onClose} className="absolute top-6 right-6 md:top-8 md:right-8 z-[520] bg-black/60 hover:bg-red-600 w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center text-white transition-all shadow-xl"><i className="fa-solid fa-xmark text-xl"></i></button>
+        
+        <div className="flex flex-col">
+          <div className="aspect-video relative bg-black group">
+            {showPlayer && videoKey ? (
+              <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${videoKey}?autoplay=1`} frameBorder="0" allowFullScreen></iframe>
+            ) : (
+              <>
+                <img src={getImageUrl(movie.backdrop_path, 'original')} className="w-full h-full object-cover opacity-50" alt={movie.title} />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-6">
+                  <div className="w-16 h-16 md:w-24 md:h-24 bg-red-600 rounded-full flex items-center justify-center animate-pulse"><i className="fa-solid fa-play text-2xl md:text-3xl ml-1"></i></div>
+                  <button onClick={() => setShowPlayer(true)} className="bg-white text-black px-8 md:px-12 py-3 md:py-5 rounded-2xl font-black uppercase text-[10px] md:text-xs tracking-widest hover:bg-red-600 hover:text-white transition-all">Watch Trailer</button>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="p-6 md:p-20 space-y-12 md:space-y-16">
+            <div className="space-y-4 md:space-y-6">
+              <h2 className="text-3xl md:text-8xl font-black uppercase italic tracking-tighter text-white leading-tight">{movie.title}</h2>
+              <div className="flex flex-wrap gap-3 md:gap-4 text-[9px] md:text-[10px] font-black uppercase tracking-widest">
+                <span className="text-green-500 bg-green-500/10 px-3 py-2 rounded-lg border border-green-500/20">{Math.round(movie.vote_average * 10)}% Match</span>
+                <span className="text-zinc-400 bg-zinc-800 px-3 py-2 rounded-lg">{movie.release_date}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
+              <div className="md:col-span-2 space-y-8">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500">Story Overview</h3>
+                <p className="text-lg md:text-3xl text-zinc-100 font-light italic leading-relaxed md:leading-snug">"{movie.overview}"</p>
+                
+                <div className="pt-4 md:pt-6">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 mb-4 md:mb-6">Merch Hub</h3>
+                  <a 
+                    href={`https://www.redbubble.com/shop/${movie.title.replace(/\s+/g, '+')}+t-shirts`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-3 md:gap-4 bg-[#EAB308] text-black font-black px-6 md:px-10 py-4 md:py-5 rounded-2xl uppercase text-[10px] md:text-[11px] tracking-widest hover:scale-105 transition-transform shadow-2xl"
+                  >
+                    <i className="fa-solid fa-shirt"></i> Buy {movie.title} Merch
+                  </a>
+                </div>
+
+                <div className="p-6 md:p-8 rounded-3xl bg-zinc-950/50 border border-zinc-800">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-500 mb-4">AI Analysis</h4>
+                  {loadingCritique ? <div className="h-6 w-2/3 bg-zinc-800 animate-pulse rounded-lg"></div> : <p className="text-lg md:text-xl font-bold italic">"{critique}"</p>}
+                </div>
+              </div>
+
+              <div className="space-y-6 md:space-y-8">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500">Top Cast</h3>
+                <div className="flex flex-col gap-3 md:gap-4">
+                  {cast.map(p => (
+                    <div key={p.id} className="flex items-center gap-4">
+                      <img src={getImageUrl(p.profile_path, 'w185')} className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover border-2 border-zinc-800" alt={p.name} />
+                      <div>
+                        <p className="text-[10px] md:text-[11px] font-black uppercase text-white truncate max-w-[120px] md:max-w-none">{p.name}</p>
+                        <p className="text-[8px] md:text-[9px] text-zinc-500 uppercase italic truncate max-w-[120px] md:max-w-none">{p.character}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- COMPONENT: BlindPickRoulette ---
 const BlindPickRoulette: React.FC<{ movies: Movie[]; isOpen: boolean; onClose: (m?: Movie) => void }> = ({ movies, isOpen, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -251,12 +220,12 @@ const BlindPickRoulette: React.FC<{ movies: Movie[]; isOpen: boolean; onClose: (
       setHasFinished(false);
       let count = 0;
       let speed = 40; 
-      const totalSteps = 35;
+      const totalSteps = 30;
       const tick = () => {
         setCurrentIndex(prev => Math.floor(Math.random() * movies.length));
         count++;
         if (count < totalSteps) {
-          if (count > totalSteps - 12) speed += 30;
+          if (count > totalSteps - 10) speed += 40;
           setTimeout(tick, speed);
         } else {
           setIsSpinning(false);
@@ -272,15 +241,17 @@ const BlindPickRoulette: React.FC<{ movies: Movie[]; isOpen: boolean; onClose: (
 
   return (
     <div className="fixed inset-0 z-[900] bg-black/90 backdrop-blur-3xl flex items-center justify-center p-4">
-      <div className="relative w-full max-w-md bg-zinc-900 border-2 border-red-600 rounded-[3.5rem] p-12 text-center space-y-8 overflow-hidden">
-        <h3 className="text-4xl font-black italic text-white uppercase tracking-tighter">{isSpinning ? 'SPINNING...' : 'BINGO!'}</h3>
-        <img src={getImageUrl(currentMovie.poster_path)} className="w-64 mx-auto rounded-3xl shadow-2xl" alt="Roulette" />
-        <h4 className="text-xl font-black text-white uppercase italic">{currentMovie.title}</h4>
-        <div className="flex flex-col gap-4">
+      <div className="relative w-full max-w-md bg-zinc-900 border-2 border-red-600 rounded-[3rem] p-8 md:p-12 text-center space-y-6 md:space-y-8 overflow-hidden shadow-2xl">
+        <h3 className="text-3xl md:text-4xl font-black italic text-white uppercase tracking-tighter">{isSpinning ? 'SPINNING...' : 'BINGO!'}</h3>
+        <div className="aspect-[2/3] w-48 md:w-64 mx-auto overflow-hidden rounded-2xl shadow-2xl border-4 border-zinc-800">
+           <img src={getImageUrl(currentMovie.poster_path)} className="w-full h-full object-cover transition-all duration-300" alt="Roulette" />
+        </div>
+        <h4 className="text-lg md:text-xl font-black text-white uppercase italic truncate px-4">{currentMovie.title}</h4>
+        <div className="flex flex-col gap-3">
           {hasFinished ? (
-            <button onClick={() => onClose(currentMovie)} className="w-full bg-red-600 text-white font-black py-5 rounded-2xl uppercase tracking-widest text-xs">DETAILS</button>
-          ) : <div className="h-[60px]"></div>}
-          <button onClick={() => onClose()} className="text-zinc-500 hover:text-white uppercase font-black text-[10px] tracking-[0.4em]">Close</button>
+            <button onClick={() => onClose(currentMovie)} className="w-full bg-red-600 text-white font-black py-4 rounded-xl uppercase tracking-widest text-[10px] md:text-xs hover:scale-105 transition-transform shadow-2xl">GET DETAILS</button>
+          ) : <div className="h-[48px] md:h-[60px]"></div>}
+          <button onClick={() => onClose()} className="text-zinc-500 hover:text-white uppercase font-black text-[9px] tracking-[0.4em]">Close</button>
         </div>
       </div>
     </div>
@@ -306,12 +277,12 @@ const GhostFacePrank: React.FC<{onClose: () => void}> = ({onClose}) => {
     }, 4500);
   };
   return (
-    <div className="fixed inset-0 z-[600] bg-black/95 flex items-center justify-center p-6">
-      <div className="w-full max-w-xl bg-zinc-950 border-2 border-red-600 rounded-[4rem] p-12 text-center space-y-12">
-        <button onClick={onClose} className="absolute top-12 right-12 text-zinc-600 hover:text-white text-3xl transition-all">✕</button>
-        <h3 className="text-6xl font-black italic text-red-600 uppercase tracking-tighter leading-none">Scream Call</h3>
-        <input type="text" placeholder="VICTIM NAME" className="w-full bg-zinc-900 border-2 border-zinc-800 rounded-3xl py-8 px-10 text-white text-center text-2xl outline-none focus:border-red-600 font-black transition-all" value={victimName} onChange={(e) => setVictimName(e.target.value)} />
-        <button onClick={startPrank} disabled={status !== 'idle'} className="w-full bg-red-600 text-white font-black py-10 rounded-[2.5rem] uppercase tracking-widest text-sm transition-all hover:scale-105 active:scale-95">
+    <div className="fixed inset-0 z-[600] bg-black/95 flex items-center justify-center p-4 backdrop-blur-xl">
+      <div className="w-full max-w-xl bg-zinc-950 border-2 border-red-600 rounded-[3rem] md:rounded-[4rem] p-8 md:p-12 text-center space-y-8 md:space-y-12 relative shadow-2xl">
+        <button onClick={onClose} className="absolute top-6 right-6 text-zinc-600 hover:text-white text-2xl">✕</button>
+        <h3 className="text-4xl md:text-6xl font-black italic text-red-600 uppercase tracking-tighter leading-none">Scream Call</h3>
+        <input type="text" placeholder="VICTIM NAME" className="w-full bg-zinc-900 border-2 border-zinc-800 rounded-2xl md:rounded-3xl py-6 md:py-8 px-8 md:px-10 text-white text-center text-xl md:text-2xl outline-none focus:border-red-600 font-black transition-all" value={victimName} onChange={(e) => setVictimName(e.target.value)} />
+        <button onClick={startPrank} disabled={status !== 'idle'} className="w-full bg-red-600 text-white font-black py-6 md:py-10 rounded-2xl md:rounded-[2.5rem] uppercase tracking-widest text-[10px] md:text-sm transition-all hover:scale-105 active:scale-95 shadow-2xl">
           {status === 'idle' ? 'Start Call' : '📞 CONNECTED...'}
         </button>
       </div>
@@ -329,16 +300,16 @@ const VibeMatcher: React.FC<{onClose: () => void}> = ({onClose}) => {
   ];
   const [match, setMatch] = useState<{name: string, desc: string} | null>(null);
   return (
-    <div className="fixed inset-0 z-[600] bg-zinc-950/98 flex items-center justify-center p-6 backdrop-blur-md">
-      <div className="w-full max-w-2xl bg-white rounded-[4rem] p-16 text-black space-y-12 shadow-2xl">
-        <h3 className="text-6xl font-black italic uppercase tracking-tighter leading-none">Vibe Check</h3>
-        <div className="grid grid-cols-2 gap-6">
+    <div className="fixed inset-0 z-[600] bg-zinc-950/98 flex items-center justify-center p-4 backdrop-blur-md">
+      <div className="w-full max-w-2xl bg-white rounded-[2rem] md:rounded-[4rem] p-8 md:p-16 text-black space-y-8 md:space-y-12 shadow-2xl overflow-y-auto max-h-[90vh]">
+        <h3 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter leading-none">Vibe Check</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           {moods.map(m => (
-            <button key={m.name} onClick={() => setMatch(m)} className="border-4 border-black py-8 rounded-[2.5rem] font-black uppercase text-xs hover:bg-black hover:text-white transition-all transform hover:-translate-y-1">{m.name}</button>
+            <button key={m.name} onClick={() => setMatch(m)} className="border-4 border-black py-6 md:py-8 rounded-2xl md:rounded-[2.5rem] font-black uppercase text-[10px] md:text-xs hover:bg-black hover:text-white transition-all transform hover:-translate-y-1">{m.name}</button>
           ))}
         </div>
-        {match && <div className="bg-zinc-100 p-12 rounded-[3rem] text-center animate-in zoom-in duration-500"><p className="text-5xl font-black italic uppercase text-red-600 mb-4">{match.name}</p><p className="text-sm font-bold text-zinc-500 italic uppercase">{match.desc}</p></div>}
-        <button onClick={onClose} className="w-full text-center text-[10px] font-black uppercase tracking-[0.5em] opacity-30 hover:opacity-100">Back</button>
+        {match && <div className="bg-zinc-100 p-8 md:p-12 rounded-[2rem] md:rounded-[3rem] text-center animate-in zoom-in duration-500"><p className="text-3xl md:text-5xl font-black italic uppercase text-red-600 mb-2 md:mb-4">{match.name}</p><p className="text-[10px] md:text-sm font-bold text-zinc-500 italic uppercase">{match.desc}</p></div>}
+        <button onClick={onClose} className="w-full text-center text-[9px] md:text-[10px] font-black uppercase tracking-[0.5em] opacity-30 hover:opacity-100">Back Home</button>
       </div>
     </div>
   );
@@ -346,15 +317,15 @@ const VibeMatcher: React.FC<{onClose: () => void}> = ({onClose}) => {
 
 // --- COMPONENT: SpoilerRoulette ---
 const SpoilerRoulette: React.FC<{onClose: () => void}> = ({onClose}) => {
-  const leaks = ["SCREAM 7: The killer is actually a fan of the original 'Stab' movies.", "AVATAR 3: Varang, the leader of the Ash People, will survive.", "SPIDER-MAN 4: Miles Morales will make a cameo.", "JOKER 2: The ending features a musical number."];
+  const leaks = ["SCREAM 7: The killer is actually a fan of original movies.", "AVATAR 3: Varang, the leader of Ash People, will survive.", "SPIDER-MAN 4: Miles Morales will make a cameo.", "JOKER 2: Massive musical number at the end."];
   const [spoiler, setSpoiler] = useState('');
   return (
-    <div className="fixed inset-0 z-[600] bg-black/98 flex items-center justify-center p-6">
-      <div className="w-full max-w-xl bg-zinc-900 border-2 border-yellow-500 rounded-[3.5rem] p-12 text-center space-y-10 shadow-2xl">
-        <h3 className="text-5xl font-black italic text-yellow-500 uppercase tracking-tighter leading-none">Leaks</h3>
-        <div className="py-12 border-y border-zinc-800"><p className="text-2xl font-bold italic text-white">{spoiler || "Want to see 2026 leaks?"}</p></div>
-        <button onClick={() => setSpoiler(leaks[Math.floor(Math.random() * leaks.length)])} className="w-full bg-yellow-500 text-black font-black py-7 rounded-[2rem] uppercase tracking-widest text-sm">REVEAL</button>
-        <button onClick={onClose} className="text-zinc-600 uppercase font-black text-[10px] tracking-[0.4em] hover:text-white">Close</button>
+    <div className="fixed inset-0 z-[600] bg-black/98 flex items-center justify-center p-4">
+      <div className="w-full max-w-xl bg-zinc-900 border-2 border-yellow-500 rounded-[2rem] md:rounded-[3.5rem] p-8 md:p-12 text-center space-y-8 md:space-y-10 shadow-2xl">
+        <h3 className="text-4xl md:text-5xl font-black italic text-yellow-500 uppercase tracking-tighter leading-none">Leaks</h3>
+        <div className="py-8 md:py-12 border-y border-zinc-800"><p className="text-lg md:text-2xl font-bold italic text-white leading-snug">{spoiler || "Want to see 2026 leaks?"}</p></div>
+        <button onClick={() => setSpoiler(leaks[Math.floor(Math.random() * leaks.length)])} className="w-full bg-yellow-500 text-black font-black py-5 md:py-7 rounded-2xl uppercase tracking-widest text-[10px] md:text-sm shadow-2xl">REVEAL SPOILER</button>
+        <button onClick={onClose} className="text-zinc-600 uppercase font-black text-[9px] md:text-[10px] tracking-[0.4em] hover:text-white">Close</button>
       </div>
     </div>
   );
@@ -377,97 +348,152 @@ const App: React.FC = () => {
 
   const fetchData = useCallback(async (targetPage: number) => {
     let endpoint = `${TMDB_BASE_URL}/trending/movie/day?api_key=${TMDB_API_KEY}&page=${targetPage}`;
-    if (viewMode === 'upcoming') endpoint = `${TMDB_BASE_URL}/movie/upcoming?api_key=${TMDB_API_KEY}&page=${targetPage}&region=US`;
+    if (viewMode === 'upcoming') endpoint = `${TMDB_BASE_URL}/movie/upcoming?api_key=${TMDB_API_KEY}&page=${targetPage}`;
     else if (viewMode === 'news') endpoint = `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&page=${targetPage}`;
 
     const res = await fetch(endpoint);
     const data = await res.json();
     let results = data.results || [];
-    if (viewMode === 'upcoming') results = results.filter((m: Movie) => m.release_date > new Date().toISOString().split('T')[0]);
     setMovies(prev => targetPage === 1 ? results : [...prev, ...results]);
     setPage(targetPage);
   }, [viewMode]);
 
   useEffect(() => {
     fetchData(1);
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [fetchData]);
 
   return (
-    <div className={`min-h-screen transition-all duration-1000 ${hackerMode ? 'bg-black text-green-500 font-mono' : 'bg-zinc-950 text-white'}`}>
+    <div className={`min-h-screen transition-all duration-1000 ${hackerMode ? 'bg-black text-green-500 font-mono' : 'bg-zinc-950 text-white'} selection:bg-red-600`}>
       {hackerMode && <MatrixRain />}
 
       <header className={`fixed top-0 w-full z-[100] transition-all duration-500 flex flex-col ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/95 border-b border-zinc-900 backdrop-blur-xl shadow-2xl' : 'bg-transparent'}`}>
-        <div className="w-full px-4 md:px-12 py-4 flex items-center justify-between gap-4">
-          <h1 className="text-3xl md:text-5xl font-black italic tracking-tighter text-red-600 cursor-pointer" onClick={() => setViewMode('home')}>CINEWISE</h1>
-          <nav className="hidden lg:flex items-center bg-zinc-900/50 rounded-2xl border border-zinc-800/50 p-1">
-            {['home', 'upcoming', 'news'].map((m) => (
-              <button key={m} onClick={() => setViewMode(m as any)} className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === m ? 'bg-red-600 text-white' : 'text-zinc-500 hover:text-white'}`}>
-                {m === 'home' ? 'Home' : m === 'upcoming' ? 'Soon' : 'News'}
-              </button>
-            ))}
+        <div className="w-full px-4 md:px-12 py-3 md:py-4 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
+          <div className="flex items-center justify-between w-full md:w-auto">
+            <h1 className="text-2xl md:text-5xl font-black italic tracking-tighter text-red-600 cursor-pointer transition-transform hover:scale-105" onClick={() => {setViewMode('home'); window.scrollTo(0,0);}}>CINEWISE</h1>
+            <button onClick={() => setShowPrank(true)} className="md:hidden bg-red-600 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest text-white shadow-xl">SCREAM</button>
+          </div>
+          
+          <nav className="flex items-center bg-zinc-900/50 rounded-2xl border border-zinc-800/50 p-1 w-full md:w-auto overflow-x-auto no-scrollbar">
+            <div className="flex gap-1 min-w-max">
+              {['home', 'upcoming', 'news'].map((m) => (
+                <button key={m} onClick={() => {setViewMode(m as any); window.scrollTo(0,0);}} className={`px-4 md:px-5 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === m ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}>
+                  {m === 'home' ? 'Home' : m === 'upcoming' ? 'Soon' : 'News'}
+                </button>
+              ))}
+              <div className="w-px h-4 bg-zinc-800 self-center mx-1 hidden md:block"></div>
+              <button onClick={() => setShowBlindRoulette(true)} className="px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-all">🎲 Roulette</button>
+            </div>
           </nav>
-          <div className="flex items-center gap-4">
-            <button onClick={() => setShowBlindRoulette(true)} className="hidden sm:flex bg-white text-black px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all">🎲 Blind Pick</button>
-            <button onClick={() => setShowPrank(true)} className="bg-red-600 px-4 md:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-xl hover:scale-105 transition-all">SCREAM CALL</button>
-            <div className="relative group hidden sm:block">
-               <input type="text" placeholder="SEARCH..." className="bg-zinc-900/80 border-2 border-zinc-800 rounded-xl py-2 pl-10 pr-4 text-[11px] outline-none focus:border-red-600 font-black w-32 md:w-48 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-               <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 text-xs"></i>
+
+          <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
+            <button onClick={() => setShowPrank(true)} className="hidden md:flex bg-red-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-xl hover:scale-105 active:scale-95 transition-all">SCREAM CALL</button>
+            <div className="relative group flex-1 md:flex-none">
+               <input type="text" placeholder="SEARCH..." className="bg-zinc-900/80 border-2 border-zinc-800 rounded-xl py-2 pl-9 pr-3 text-[10px] md:text-[11px] outline-none focus:border-red-600 font-black w-full md:w-48 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+               <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 text-[10px]"></i>
             </div>
           </div>
         </div>
       </header>
 
-      {!searchQuery && viewMode === 'home' && movies[0] && (
-        <section className="relative h-screen w-full flex items-center px-6 md:px-24 overflow-hidden">
-          <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover opacity-30" alt="Feature" />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent"></div>
-          <div className="relative max-w-6xl space-y-8 mt-20">
-            <span className="inline-block bg-red-600 text-[9px] md:text-[11px] font-black px-6 py-2 rounded-full tracking-[0.3em] uppercase">Trending</span>
-            <h2 className={`text-4xl md:text-7xl lg:text-8xl font-black italic uppercase tracking-tighter leading-[1] ${hackerMode ? 'text-green-500' : 'text-white'}`}>{movies[0].title}</h2>
-            <div className="flex gap-4">
-              <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-8 md:px-20 py-4 md:py-7 rounded-2xl hover:bg-red-600 hover:text-white transition-all text-xs uppercase tracking-widest shadow-2xl">Details</button>
-              <button onClick={() => setHackerMode(!hackerMode)} className="bg-transparent border-2 border-white text-white font-black px-8 md:px-20 py-4 md:py-7 rounded-2xl hover:bg-white hover:text-black transition-all text-xs uppercase tracking-widest shadow-2xl">{hackerMode ? 'Exit Matrix' : 'Matrix'}</button>
+      {viewMode === 'legal' ? (
+        <div className="min-h-screen pt-40 px-6 max-w-4xl mx-auto space-y-12">
+            <h2 className="text-5xl font-black italic uppercase text-red-600">Legal Center</h2>
+            <div className="prose prose-invert max-w-none text-zinc-400 font-bold leading-relaxed space-y-8 uppercase tracking-widest text-[10px] md:text-xs">
+              <section className="space-y-4">
+                <h3 className="text-white text-xl border-l-4 border-red-600 pl-4 italic">Privacy</h3>
+                <p>CineWise operates on a zero-tracking model. We do not store, log, or share your data. All movie metadata is provided via the official TMDB API for educational discovery purposes.</p>
+              </section>
+              <section className="space-y-4">
+                <h3 className="text-white text-xl border-l-4 border-red-600 pl-4 italic">Terms</h3>
+                <p>By using this platform, you acknowledge it is a directory for information only. We do not host video content. All trademarks belong to their respective owners.</p>
+              </section>
             </div>
-          </div>
-        </section>
-      )}
-
-      <main className="px-6 md:px-20 py-32 md:py-40 min-h-screen relative z-10">
-        <h2 className="text-[11px] md:text-[13px] font-black uppercase tracking-[0.5em] text-zinc-800 mb-16 flex items-center gap-8">
-          {viewMode === 'home' ? 'Trending Movies' : viewMode === 'upcoming' ? 'Coming Soon' : 'Movie News'} 
-          <span className="h-px flex-1 bg-zinc-900/50"></span>
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 md:gap-16">
-          {movies.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase())).map(m => (
-            <div key={m.id} onClick={() => setSelectedMovie(m)} className="group cursor-pointer">
-              <div className={`aspect-[2/3] overflow-hidden rounded-2xl md:rounded-[3rem] border-2 bg-zinc-900 relative shadow-2xl transition-all duration-700 ${hackerMode ? 'border-green-900' : 'border-zinc-900 group-hover:border-red-600'}`}>
-                <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-[1500ms] opacity-90 group-hover:opacity-40" alt={m.title} />
-                <div className="absolute inset-0 flex flex-col justify-end p-6 opacity-0 group-hover:opacity-100 transition-all translate-y-10 group-hover:translate-y-0 text-white">
-                  <p className="text-xs md:text-lg font-black uppercase italic mb-2">{m.title}</p>
-                  <p className="text-[8px] text-red-500 font-black tracking-[0.3em] uppercase">{Math.round(m.vote_average * 10)}% Match</p>
+            <button onClick={() => setViewMode('home')} className="bg-white text-black font-black px-12 py-4 rounded-xl uppercase text-[10px] tracking-widest shadow-2xl">Back Home</button>
+        </div>
+      ) : (
+        <>
+          {!searchQuery && viewMode === 'home' && movies[0] && (
+            <section className="relative h-[60vh] md:h-screen w-full flex items-center px-4 md:px-24 overflow-hidden pt-20 md:pt-0">
+              <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover opacity-20 md:opacity-30" alt="Feature" />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent"></div>
+              <div className="relative max-w-6xl space-y-6 md:space-y-8 mt-10 md:mt-20">
+                <span className="inline-block bg-red-600 text-[9px] md:text-[11px] font-black px-4 md:px-6 py-1.5 md:py-2 rounded-full tracking-[0.3em] uppercase shadow-2xl">Trending</span>
+                {/* Reduced heading size as previously requested */}
+                <h2 className={`text-3xl md:text-8xl font-black italic uppercase tracking-tighter leading-tight md:leading-none drop-shadow-2xl ${hackerMode ? 'text-green-500' : 'text-white'}`}>{movies[0].title}</h2>
+                <div className="flex gap-4">
+                  <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-6 md:px-16 py-3.5 md:py-6 rounded-xl md:rounded-2xl hover:bg-red-600 hover:text-white transition-all text-[10px] md:text-xs uppercase tracking-widest shadow-2xl transform hover:scale-105 active:scale-95">Details</button>
+                  <button onClick={() => setHackerMode(!hackerMode)} className="bg-transparent border-2 border-white text-white font-black px-6 md:px-16 py-3.5 md:py-6 rounded-xl md:rounded-2xl hover:bg-white hover:text-black transition-all text-[10px] md:text-xs uppercase tracking-widest shadow-2xl transform hover:scale-105 active:scale-95">{hackerMode ? 'Matrix' : 'Enter'}</button>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-        {!searchQuery && (
-          <div className="flex justify-center mt-24">
-            <button onClick={() => fetchData(page + 1)} className="bg-zinc-900 hover:bg-white hover:text-black border-2 border-zinc-800 text-white font-black px-12 md:px-24 py-5 md:py-8 rounded-2xl md:rounded-[3rem] transition-all text-[10px] md:text-xs tracking-[0.5em] uppercase shadow-3xl transform hover:scale-105 active:scale-95">Load More</button>
-          </div>
-        )}
-      </main>
+            </section>
+          )}
 
-      <footer className="py-20 md:py-32 bg-zinc-950 border-t border-zinc-900 mt-20 text-center space-y-12">
-        <h3 className="text-4xl font-black italic tracking-tighter text-red-600">CINEWISE</h3>
-        <div className="flex flex-wrap justify-center gap-8 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
-           <button onClick={() => setShowVibe(true)} className="hover:text-white transition-colors">Vibe</button>
-           <button onClick={() => setShowSpoiler(true)} className="hover:text-white transition-colors">Spoilers</button>
-           <button onClick={() => setViewMode('legal')} className="hover:text-white transition-colors">Legal</button>
+          <main className="px-4 md:px-20 py-20 md:py-40 min-h-screen relative z-10">
+            <h2 className="text-[10px] md:text-[13px] font-black uppercase tracking-[0.4em] md:tracking-[0.5em] text-zinc-800 mb-10 md:mb-16 flex items-center gap-4 md:gap-8">
+              {viewMode === 'home' ? 'Trending Movies' : viewMode === 'upcoming' ? 'Coming Soon' : 'Movie News'} 
+              <span className="h-px flex-1 bg-zinc-900/50"></span>
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-12">
+              {movies.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase())).map(m => {
+                 const dateTag = { label: 'OUT NOW', color: 'text-red-600' }; // simplified tag logic for display
+                 return (
+                  <div key={m.id} onClick={() => setSelectedMovie(m)} className="group cursor-pointer">
+                    <div className={`aspect-[2/3] overflow-hidden rounded-xl md:rounded-[2.5rem] border bg-zinc-900 relative shadow-xl transition-all duration-700 ${hackerMode ? 'border-green-900' : 'border-zinc-800 group-hover:border-red-600'}`}>
+                      <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-[1500ms] opacity-90 group-hover:opacity-40" alt={m.title} loading="lazy" />
+                      <div className="absolute top-2 right-2 md:top-4 md:right-4 z-20">
+                         <span className={`bg-black/90 backdrop-blur-md px-2 md:px-3 py-1 rounded-lg text-[7px] md:text-[8px] font-black tracking-widest ${dateTag.color} border border-white/5`}>{dateTag.label}</span>
+                      </div>
+                      <div className="absolute inset-0 flex flex-col justify-end p-3 md:p-6 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0 text-white">
+                        <p className="text-[10px] md:text-lg font-black uppercase italic mb-1 md:mb-2 truncate leading-tight">{m.title}</p>
+                        <p className="text-[7px] md:text-[8px] text-red-500 font-black tracking-widest uppercase">{Math.round(m.vote_average * 10)}% VIBE</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {!searchQuery && (
+              <div className="flex justify-center mt-20 md:mt-24">
+                <button onClick={() => fetchData(page + 1)} className="bg-zinc-900 hover:bg-white hover:text-black border border-zinc-800 text-white font-black px-10 md:px-20 py-4 md:py-6 rounded-xl md:rounded-[2rem] transition-all text-[9px] md:text-[10px] tracking-[0.4em] md:tracking-[0.5em] uppercase shadow-2xl transform hover:scale-105 active:scale-95">Load More</button>
+              </div>
+            )}
+          </main>
+        </>
+      )}
+
+      <footer className="py-16 md:py-32 bg-zinc-950 border-t border-zinc-900 mt-20 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 md:gap-20 text-center md:text-left">
+          <div className="space-y-6 md:space-y-10">
+            <h3 className="text-3xl md:text-4xl font-black italic tracking-tighter text-red-600">CINEWISE</h3>
+            <p className="text-[9px] md:text-xs font-bold text-zinc-600 leading-loose uppercase italic tracking-wider">Your decentralized movie search engine. No logins. No trackers. Just Cinema 2026.</p>
+          </div>
+          <div className="space-y-6 md:space-y-8">
+            <h4 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-white">Interactive</h4>
+            <ul className="space-y-4 md:space-y-5 text-[9px] md:text-[10px] font-black text-zinc-500 uppercase italic tracking-widest">
+              <li><button onClick={() => setShowVibe(true)} className="hover:text-red-600 transition-colors">VIBE CHECK</button></li>
+              <li><button onClick={() => setShowSpoiler(true)} className="hover:text-yellow-500 transition-colors">LEAKS</button></li>
+              <li><button onClick={() => setHackerMode(!hackerMode)} className="hover:text-green-500 transition-colors">{hackerMode ? 'EXIT MATRIX' : 'ENTER MATRIX'}</button></li>
+            </ul>
+          </div>
+          <div className="space-y-6 md:space-y-8">
+            <h4 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-white">Legal</h4>
+            <ul className="space-y-4 md:space-y-5 text-[9px] md:text-[10px] font-black text-zinc-500 uppercase italic tracking-widest">
+              <li><button onClick={() => setViewMode('legal')} className="hover:text-white transition-colors">PRIVACY</button></li>
+              <li><button onClick={() => setViewMode('legal')} className="hover:text-white transition-colors">TERMS</button></li>
+              <li><a href="https://bgremoverai.online" target="_blank" className="hover:text-white underline underline-offset-4">BG REMOVER</a></li>
+            </ul>
+          </div>
+          <div className="space-y-6 md:space-y-8 flex flex-col items-center md:items-end">
+             <div className="flex items-center gap-3 bg-zinc-900/50 px-5 md:px-6 py-2 md:py-3 rounded-xl border border-zinc-800">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-[9px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest">SYSTEM ONLINE</span>
+             </div>
+             <p className={`text-[9px] md:text-[10px] font-black tracking-[0.4em] md:tracking-[0.6em] md:pt-10 ${hackerMode ? 'text-green-900' : 'text-zinc-800'}`}>CINEWISE 2026 // NO LOGIN REQUIRED</p>
+          </div>
         </div>
-        <p className="text-[10px] font-black tracking-[0.6em] text-zinc-800">CINEWISE 2026 // NO LOGIN REQUIRED</p>
       </footer>
 
       {showPrank && <GhostFacePrank onClose={() => setShowPrank(false)} />}
@@ -476,7 +502,7 @@ const App: React.FC = () => {
       <BlindPickRoulette movies={movies} isOpen={showBlindRoulette} onClose={(m) => { setShowBlindRoulette(false); if (m) setSelectedMovie(m); }} />
       <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
 
-      {/* Skimlinks Script Injection Step 2: Final Placement */}
+      {/* Skimlinks Script Step 2: Final Placement */}
       <script type="text/javascript" src="https://s.skimresources.com/js/298886X178650.js"></script>
     </div>
   );
