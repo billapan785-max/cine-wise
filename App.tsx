@@ -425,7 +425,7 @@ const App: React.FC = () => {
                 <h2 className={`text-3xl md:text-8xl font-black italic uppercase tracking-tighter leading-tight md:leading-none drop-shadow-2xl ${hackerMode ? 'text-green-500' : 'text-white'}`}>{movies[0].title}</h2>
                 <div className="flex gap-4">
                   <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-6 md:px-16 py-3.5 md:py-6 rounded-xl md:rounded-2xl hover:bg-red-600 hover:text-white transition-all text-[10px] md:text-xs uppercase tracking-widest shadow-2xl transform hover:scale-105 active:scale-95">Details</button>
-                  <button onClick={() => setHackerMode(!hackerMode)} className="bg-transparent border-2 border-white text-white font-black px-6 md:px-16 py-3.5 md:py-6 rounded-xl md:rounded-2xl hover:bg-white hover:text-black transition-all text-[10px] md:text-xs uppercase tracking-widest shadow-2xl transform hover:scale-105 active:scale-95">{hackerMode ? 'Matrix' : 'Enter'}</button>
+                  <button onClick={() => setHackerMode(!hackerMode)} className="bg-transparent border-2 border-white text-white font-black px-6 md:px-16 py-3.5 md:py-6 rounded-xl md:rounded-2xl hover:bg-white hover:text-black transition-all text-[10px] md:text-xs uppercase tracking-widest shadow-2xl transform hover:scale-105 active:scale-95">{hackerMode ? 'Matrix' : 'Hacker mode'}</button>
                 </div>
               </div>
             </section>
