@@ -564,7 +564,23 @@ const App: React.FC = () => {
   const [showVibe, setShowVibe] = useState(false);
   const [showSpoiler, setShowSpoiler] = useState(false);
   const [showBlindRoulette, setShowBlindRoulette] = useState(false);
-
+const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (query.trim().length > 2) {
+      try {
+        const response = await fetch(
+          `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`
+        );
+        const data = await response.json();
+        setMovies(data.results || []);
+      } catch (err) {
+        console.error("Search error:", err);
+      }
+    } else if (query.trim().length === 0) {
+      // Jab search bar khali ho to trending movies wapis load karein
+      fetchData(1); 
+    }
+  };
   const fetchData = useCallback(async (targetPage: number) => {
     try {
       setFetchError(null);
@@ -612,7 +628,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
             <button onClick={() => setShowPrank(true)} className="hidden md:flex bg-red-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-xl hover:scale-105 transition-all">SCREAM CALL</button>
             <div className="relative group flex-1 md:flex-none">
-               <input type="text" placeholder="SEARCH..." className="bg-zinc-900/80 border-2 border-zinc-800 rounded-xl py-2 pl-9 pr-3 text-[9px] md:text-[11px] outline-none focus:border-red-600 font-black w-full md:w-48 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+               <input type="text" placeholder="SEARCH..." className="bg-zinc-900/80 border-2 border-zinc-800 rounded-xl py-2 pl-9 pr-3 text-[9px] md:text-[11px] outline-none focus:border-red-600 font-black w-full md:w-48 transition-all" value={searchQuery} onChange={(e) => handleSearch(e.target.value)} />
                <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 text-[9px]"></i>
             </div>
           </div>
