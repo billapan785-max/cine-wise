@@ -31,6 +31,20 @@ const TMDB_API_KEY = 'cfedd233fe8494b29646beabc505d193';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
+// --- DIALOGUES FOR SCENE MATCHER ---
+const FAMOUS_DIALOGUES = [
+  { movie: "The Godfather", quote: "I'm gonna make him an offer he can't refuse." },
+  { movie: "Titanic", quote: "I'm the king of the world!" },
+  { movie: "The Dark Knight", quote: "Why so serious?" },
+  { movie: "Star Wars", quote: "May the Force be with you." },
+  { movie: "Forrest Gump", quote: "Life is like a box of chocolates." },
+  { movie: "Gladiator", quote: "Are you not entertained?" },
+  { movie: "The Shining", quote: "Here's Johnny!" },
+  { movie: "Pulp Fiction", quote: "Say 'what' again. I dare you." },
+  { movie: "The Terminator", quote: "I'll be back." },
+  { movie: "Scarface", quote: "Say hello to my little friend!" }
+];
+
 // --- INLINED SERVICES ---
 const getImageUrl = (path: string, size: 'w92' | 'w185' | 'w500' | 'original' = 'w500') => {
   if (!path) return 'https://images.unsplash.com/photo-1634157703702-3c124b455499?q=80&w=200&auto=format&fit=crop';
@@ -100,6 +114,96 @@ const MatrixRain: React.FC = () => {
   return <canvas ref={canvasRef} className="fixed inset-0 z-0 opacity-20 pointer-events-none" />;
 };
 
+// --- COMPONENT: SceneMatcher ---
+const SceneMatcher: React.FC = () => {
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [result, setResult] = useState<{ movie: string, quote: string } | null>(null);
+
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setUserPhoto(event.target?.result as string);
+        setResult(null);
+        startScan();
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const startScan = () => {
+    setIsScanning(true);
+    setTimeout(() => {
+      const randomMatch = FAMOUS_DIALOGUES[Math.floor(Math.random() * FAMOUS_DIALOGUES.length)];
+      setResult(randomMatch);
+      setIsScanning(false);
+    }, 3000);
+  };
+
+  return (
+    <section className="py-24 px-6 md:px-20 bg-zinc-950 border-y border-zinc-900 relative z-10 overflow-hidden">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="space-y-8">
+          <div className="space-y-4">
+            <h2 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter text-white">Scene Matcher</h2>
+            <p className="text-zinc-500 font-bold uppercase tracking-widest text-[10px] md:text-xs italic">Find your cinematic doppelgänger. Who do you look like in the multiverse of cinema?</p>
+          </div>
+
+          <div className="space-y-6">
+            <label className="inline-block bg-white text-black font-black px-10 py-5 rounded-2xl uppercase text-[10px] tracking-widest hover:bg-red-600 hover:text-white transition-all cursor-pointer shadow-2xl">
+              Upload Your Face
+              <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+            </label>
+            
+            <div className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-3xl">
+               <p className="text-zinc-400 font-bold uppercase tracking-widest text-[9px] md:text-[10px] leading-relaxed">
+                 Want a better match? <a href="https://bgremoverai.online" target="_blank" className="text-white underline hover:text-red-600 transition-colors">Clean your photo at bgremoverai.online for free with no login required!</a>
+               </p>
+            </div>
+          </div>
+
+          {result && !isScanning && (
+            <div className="p-8 md:p-12 rounded-[2.5rem] bg-red-600/10 border border-red-600/30 animate-in zoom-in duration-500">
+              <h3 className="text-red-500 font-black uppercase tracking-[0.3em] text-[10px] mb-4">MATCH FOUND</h3>
+              <p className="text-2xl md:text-4xl font-black italic text-white mb-4">You look like you belong in {result.movie}!</p>
+              <p className="text-lg md:text-xl font-bold text-zinc-400 italic">"{result.quote}"</p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-center">
+          <div className="relative aspect-square w-full max-w-md rounded-[3rem] overflow-hidden border-4 border-zinc-800 shadow-3xl bg-zinc-900">
+            {userPhoto ? (
+              <img src={userPhoto} className="w-full h-full object-cover" alt="User face" />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-center p-12">
+                <p className="text-zinc-700 font-black uppercase tracking-widest text-[10px]">Upload a photo to start scanning...</p>
+              </div>
+            )}
+            
+            {isScanning && (
+              <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center space-y-6">
+                <div className="w-full h-1 bg-red-600 absolute top-0 animate-[scan_2s_ease-in-out_infinite] shadow-[0_0_20px_rgba(220,38,38,1)]"></div>
+                <div className="w-16 h-16 border-4 border-t-red-600 border-zinc-800 rounded-full animate-spin"></div>
+                <p className="text-white font-black uppercase tracking-widest text-[10px] animate-pulse">Scanning your face for movie matches...</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      <style>{`
+        @keyframes scan {
+          0% { top: 0; }
+          50% { top: 100%; }
+          100% { top: 0; }
+        }
+      `}</style>
+    </section>
+  );
+};
+
 // --- COMPONENT: PosterCameo ---
 const PosterCameo: React.FC<{ movies: Movie[] }> = ({ movies }) => {
   const [userImage, setUserImage] = useState<string | null>(null);
@@ -128,9 +232,7 @@ const PosterCameo: React.FC<{ movies: Movie[] }> = ({ movies }) => {
         const img = new Image();
         if (isCrossDomain) img.crossOrigin = "anonymous";
         img.onload = () => resolve(img);
-        // Better error handling to avoid {isTrusted: true} in console
         img.onerror = () => reject(new Error(`Failed to load: ${src}`));
-        // Add cache buster for cross-origin images to ensure fresh CORS handshake
         img.src = isCrossDomain ? `${src}?v=${Date.now()}` : src;
       });
     };
@@ -587,6 +689,9 @@ const App: React.FC = () => {
 
       {/* Poster Cameo Feature Segment */}
       <PosterCameo movies={movies} />
+
+      {/* Scene Matcher Segment - NEW FEATURE */}
+      <SceneMatcher />
 
       <footer className="py-16 md:py-32 bg-zinc-950 border-t border-zinc-900 relative z-10">
         <div className="max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 md:gap-20 text-center md:text-left">
