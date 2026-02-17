@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 // Fix: Import Movie from shared types to avoid mismatch with MovieDetailModal
 import { Movie } from './types';
-import MovieDetailModal from './components/MovieDetailModal';
+import MovieDetailModal from './MovieDetailModal';
 
 // --- TYPES & INTERFACES ---
 interface CastMember {
