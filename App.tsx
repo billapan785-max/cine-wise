@@ -475,7 +475,7 @@ const App: React.FC = () => {
             <ul className="space-y-4 md:space-y-5 text-[9px] md:text-[10px] font-black text-zinc-500 uppercase italic tracking-widest">
               <li><button onClick={() => setShowVibe(true)} className="hover:text-red-600 transition-colors">VIBE CHECK</button></li>
               <li><button onClick={() => setShowSpoiler(true)} className="hover:text-yellow-500 transition-colors">LEAKS</button></li>
-              <li><button onClick={() => setHackerMode(!hackerMode)} className="hover:text-green-500 transition-colors">{hackerMode ? 'EXIT MATRIX' : 'ENTER MATRIX'}</button></li>
+              <li><button onClick={() => setHackerMode(!hackerMode)} className="hover:text-green-500 transition-colors">{hackerMode ? 'EXIT MATRIX' : 'Hacker mode'}</button></li>
             </ul>
           </div>
           <div className="space-y-6 md:space-y-8">
