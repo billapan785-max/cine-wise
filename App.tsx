@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GoogleGenAI } from "@google/genai";
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 
 // --- TYPES ---
 export interface Movie {
@@ -120,6 +121,10 @@ const SceneMatcher: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [result, setResult] = useState<{ movie: string, quote: string } | null>(null);
 
+  useEffect(() => {
+    document.title = "AI Movie Scene Matcher - CineWise";
+  }, []);
+
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -143,7 +148,7 @@ const SceneMatcher: React.FC = () => {
   };
 
   return (
-    <section className="py-24 px-6 md:px-20 bg-zinc-950 border-y border-zinc-900 relative z-10 overflow-hidden">
+    <section className="py-24 px-6 md:px-20 bg-zinc-950 border-y border-zinc-900 relative z-10 overflow-hidden min-h-screen pt-32">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         <div className="space-y-8">
           <div className="space-y-4">
@@ -210,6 +215,10 @@ const PosterCameo: React.FC<{ movies: Movie[] }> = ({ movies }) => {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    document.title = "AI Movie Poster Generator - CineWise";
+  }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -286,7 +295,7 @@ const PosterCameo: React.FC<{ movies: Movie[] }> = ({ movies }) => {
   };
 
   return (
-    <section className="py-16 md:py-24 px-4 md:px-20 bg-zinc-900/30 border-y border-zinc-900 relative z-10">
+    <section className="py-24 px-4 md:px-20 bg-zinc-900/30 border-y border-zinc-900 relative z-10 min-h-screen pt-32">
       <div className="max-w-7xl mx-auto space-y-8 md:space-y-12">
         <div className="text-center md:text-left space-y-4">
           <h2 className="text-3xl md:text-6xl font-black italic uppercase tracking-tighter text-red-600">Poster Cameo</h2>
@@ -564,7 +573,8 @@ const App: React.FC = () => {
   const [showVibe, setShowVibe] = useState(false);
   const [showSpoiler, setShowSpoiler] = useState(false);
   const [showBlindRoulette, setShowBlindRoulette] = useState(false);
-const handleSearch = async (query: string) => {
+
+  const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (query.trim().length > 2) {
       try {
@@ -577,10 +587,10 @@ const handleSearch = async (query: string) => {
         console.error("Search error:", err);
       }
     } else if (query.trim().length === 0) {
-      // Jab search bar khali ho to trending movies wapis load karein
       fetchData(1); 
     }
   };
+
   const fetchData = useCallback(async (targetPage: number) => {
     try {
       setFetchError(null);
@@ -607,147 +617,157 @@ const handleSearch = async (query: string) => {
   }, [fetchData]);
 
   return (
-    <div className={`min-h-screen transition-all duration-1000 ${hackerMode ? 'bg-black text-green-500 font-mono' : 'bg-zinc-950 text-white'} selection:bg-red-600`}>
-      {hackerMode && <MatrixRain />}
+    <Router>
+      <div className={`min-h-screen transition-all duration-1000 ${hackerMode ? 'bg-black text-green-500 font-mono' : 'bg-zinc-950 text-white'} selection:bg-red-600`}>
+        {hackerMode && <MatrixRain />}
 
-      <header className={`fixed top-0 w-full z-[100] transition-all duration-500 flex flex-col ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/95 border-b border-zinc-900 backdrop-blur-xl shadow-2xl' : 'bg-transparent'}`}>
-        <div className="w-full px-4 md:px-12 py-3 md:py-4 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
-          <div className="flex items-center justify-between w-full md:w-auto">
-            <h1 className="text-2xl md:text-5xl font-black italic tracking-tighter text-red-600 cursor-pointer" onClick={() => {setViewMode('home'); window.scrollTo(0,0);}}>CINEWISE</h1>
-            <button onClick={() => setShowPrank(true)} className="md:hidden bg-red-600 px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest text-white shadow-xl">SCREAM</button>
-          </div>
-          <nav className="flex items-center bg-zinc-900/50 rounded-2xl border border-zinc-800/50 p-1 w-full md:w-auto overflow-x-auto no-scrollbar">
-            <div className="flex gap-1 min-w-max">
-              {['home', 'upcoming', 'news'].map((m) => (
-                <button key={m} onClick={() => {setViewMode(m as any); window.scrollTo(0,0);}} className={`px-4 md:px-5 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === m ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}>{m === 'home' ? 'Home' : m === 'upcoming' ? 'Soon' : 'News'}</button>
-              ))}
-              <div className="w-px h-4 bg-zinc-800 self-center mx-1 hidden md:block"></div>
-              <button onClick={() => setShowBlindRoulette(true)} className="px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-all">🎲 Roulette</button>
+        <header className={`fixed top-0 w-full z-[100] transition-all duration-500 flex flex-col ${isScrolled || viewMode !== 'home' ? 'bg-zinc-950/95 border-b border-zinc-900 backdrop-blur-xl shadow-2xl' : 'bg-transparent'}`}>
+          <div className="w-full px-4 md:px-12 py-3 md:py-4 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
+            <div className="flex items-center justify-between w-full md:w-auto">
+              <Link to="/" onClick={() => {setViewMode('home'); window.scrollTo(0,0);}}>
+                <h1 className="text-2xl md:text-5xl font-black italic tracking-tighter text-red-600 cursor-pointer">CINEWISE</h1>
+              </Link>
+              <button onClick={() => setShowPrank(true)} className="md:hidden bg-red-600 px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest text-white shadow-xl">SCREAM</button>
             </div>
-          </nav>
-          <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
-            <button onClick={() => setShowPrank(true)} className="hidden md:flex bg-red-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-xl hover:scale-105 transition-all">SCREAM CALL</button>
-            <div className="relative group flex-1 md:flex-none">
-               <input type="text" placeholder="SEARCH..." className="bg-zinc-900/80 border-2 border-zinc-800 rounded-xl py-2 pl-9 pr-3 text-[9px] md:text-[11px] outline-none focus:border-red-600 font-black w-full md:w-48 transition-all" value={searchQuery} onChange={(e) => handleSearch(e.target.value)} />
-               <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 text-[9px]"></i>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {viewMode === 'legal' ? (
-        <div className="min-h-screen pt-40 px-6 max-w-4xl mx-auto space-y-12">
-            <h2 className="text-4xl md:text-5xl font-black italic uppercase text-red-600">Legal Center</h2>
-            <div className="prose prose-invert max-w-none text-zinc-400 font-bold leading-relaxed space-y-8 uppercase tracking-widest text-[9px] md:text-xs">
-              <section className="space-y-4">
-                <h3 className="text-white text-xl border-l-4 border-red-600 pl-4 italic">Privacy</h3>
-                <p>CineWise operates on a zero-tracking model. We do not store, log, or share your data. All movie metadata is provided via the official TMDB API for educational discovery purposes.</p>
-              </section>
-              <section className="space-y-4">
-                <h3 className="text-white text-xl border-l-4 border-red-600 pl-4 italic">Terms</h3>
-                <p>By using this platform, you acknowledge it is a directory for information only. We do not host video content. All trademarks belong to their respective owners.</p>
-              </section>
-            </div>
-            <button onClick={() => setViewMode('home')} className="bg-white text-black font-black px-10 py-4 rounded-xl uppercase text-[9px] tracking-widest shadow-2xl">Back Home</button>
-        </div>
-      ) : (
-        <>
-          {!searchQuery && viewMode === 'home' && movies[0] && (
-            <section className="relative h-[55vh] md:h-screen w-full flex items-center px-4 md:px-24 overflow-hidden pt-20 md:pt-0">
-              <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover opacity-20 md:opacity-30" alt="Feature" />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent"></div>
-              <div className="relative max-w-6xl space-y-5 md:space-y-8 mt-8 md:mt-20">
-                <span className="inline-block bg-red-600 text-[8px] md:text-[11px] font-black px-4 md:px-6 py-1.5 md:py-2 rounded-full tracking-[0.3em] uppercase shadow-2xl">Trending</span>
-                <h2 className={`text-2xl md:text-8xl font-black italic uppercase tracking-tighter leading-tight md:leading-none drop-shadow-2xl ${hackerMode ? 'text-green-500' : 'text-white'}`}>{movies[0].title}</h2>
-                <div className="flex gap-3 md:gap-4">
-                  <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-6 md:px-16 py-3 md:py-6 rounded-xl md:rounded-2xl hover:bg-red-600 hover:text-white transition-all text-[9px] md:text-xs uppercase tracking-widest shadow-2xl transform hover:scale-105 active:scale-95">Details</button>
-                  <button onClick={() => setHackerMode(!hackerMode)} className="bg-transparent border-2 border-white text-white font-black px-6 md:px-16 py-3 md:py-6 rounded-xl md:rounded-2xl hover:bg-white hover:text-black transition-all text-[9px] md:text-xs uppercase tracking-widest shadow-2xl transform hover:scale-105 active:scale-95">{hackerMode ? 'Matrix' : 'Enter'}</button>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {fetchError && (
-             <div className="px-6 md:px-20 pt-32 text-center">
-                <div className="bg-red-600/10 border border-red-600/20 p-8 rounded-3xl inline-block max-w-xl">
-                   <p className="text-red-500 font-black uppercase text-xs tracking-widest mb-4">{fetchError}</p>
-                   <button onClick={() => fetchData(1)} className="bg-red-600 text-white px-8 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest">Retry Connection</button>
-                </div>
-             </div>
-          )}
-
-          <main className="px-4 md:px-20 py-16 md:py-40 min-h-screen relative z-10">
-            <h2 className="text-[9px] md:text-[13px] font-black uppercase tracking-[0.4em] md:tracking-[0.5em] text-zinc-800 mb-8 md:mb-16 flex items-center gap-4 md:gap-8">
-              {viewMode === 'home' ? 'Trending Movies' : viewMode === 'upcoming' ? 'Coming Soon' : 'Movie News'} 
-              <span className="h-px flex-1 bg-zinc-900/50"></span>
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-12">
-              {movies.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase())).map(m => (
-                  <div key={m.id} onClick={() => setSelectedMovie(m)} className="group cursor-pointer">
-                    <div className={`aspect-[2/3] overflow-hidden rounded-xl md:rounded-[2.5rem] border bg-zinc-900 relative shadow-xl transition-all duration-700 ${hackerMode ? 'border-green-900' : 'border-zinc-800 group-hover:border-red-600'}`}>
-                      <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-[1500ms] opacity-90 group-hover:opacity-40" alt={m.title} loading="lazy" />
-                      <div className="absolute inset-0 flex flex-col justify-end p-3 md:p-6 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0 text-white">
-                        <p className="text-[10px] md:text-lg font-black uppercase italic mb-1 md:mb-2 truncate leading-tight">{m.title}</p>
-                        <p className="text-[7px] md:text-[8px] text-red-500 font-black tracking-widest uppercase">{Math.round(m.vote_average * 10)}% VIBE</p>
-                      </div>
-                    </div>
-                  </div>
+            <nav className="flex items-center bg-zinc-900/50 rounded-2xl border border-zinc-800/50 p-1 w-full md:w-auto overflow-x-auto no-scrollbar">
+              <div className="flex gap-1 min-w-max">
+                {['home', 'upcoming', 'news'].map((m) => (
+                  <Link key={m} to="/" onClick={() => {setViewMode(m as any); window.scrollTo(0,0);}} className={`px-4 md:px-5 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === m ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}>{m === 'home' ? 'Home' : m === 'upcoming' ? 'Soon' : 'News'}</Link>
                 ))}
-            </div>
-            {!searchQuery && movies.length > 0 && (
-              <div className="flex justify-center mt-16 md:mt-24">
-                <button onClick={() => fetchData(page + 1)} className="bg-zinc-900 hover:bg-white hover:text-black border border-zinc-800 text-white font-black px-10 md:px-20 py-4 md:py-6 rounded-xl md:rounded-[2rem] transition-all text-[8px] md:text-[10px] tracking-[0.4em] md:tracking-[0.5em] uppercase shadow-2xl transform hover:scale-105 active:scale-95">Load More</button>
+                <div className="w-px h-4 bg-zinc-800 self-center mx-1"></div>
+                <Link to="/poster-ai" className="px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white">Poster AI</Link>
+                <Link to="/scene-matcher" className="px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white">Scene Matcher</Link>
+                <button onClick={() => setShowBlindRoulette(true)} className="px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-all">🎲 Roulette</button>
               </div>
-            )}
-          </main>
-        </>
-      )}
-
-      {/* Poster Cameo Feature Segment */}
-      <PosterCameo movies={movies} />
-
-      {/* Scene Matcher Segment - NEW FEATURE */}
-      <SceneMatcher />
-
-      <footer className="py-16 md:py-32 bg-zinc-950 border-t border-zinc-900 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 md:gap-20 text-center md:text-left">
-          <div className="space-y-6 md:space-y-10">
-            <h3 className="text-3xl md:text-4xl font-black italic tracking-tighter text-red-600">CINEWISE</h3>
-            <p className="text-[9px] md:text-xs font-bold text-zinc-600 leading-loose uppercase italic tracking-wider">Your decentralized movie search engine. No logins. No trackers. Just Cinema 2026.</p>
+            </nav>
+            <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
+              <button onClick={() => setShowPrank(true)} className="hidden md:flex bg-red-600 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white shadow-xl hover:scale-105 transition-all">SCREAM CALL</button>
+              <div className="relative group flex-1 md:flex-none">
+                 <input type="text" placeholder="SEARCH..." className="bg-zinc-900/80 border-2 border-zinc-800 rounded-xl py-2 pl-9 pr-3 text-[9px] md:text-[11px] outline-none focus:border-red-600 font-black w-full md:w-48 transition-all" value={searchQuery} onChange={(e) => handleSearch(e.target.value)} />
+                 <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600 text-[9px]"></i>
+              </div>
+            </div>
           </div>
-          <div className="space-y-6 md:space-y-8">
-            <h4 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-white">Interactive</h4>
-            <ul className="space-y-4 md:space-y-5 text-[9px] md:text-[10px] font-black text-zinc-500 uppercase italic tracking-widest">
-              <li><button onClick={() => setShowVibe(true)} className="hover:text-red-600 transition-colors">VIBE CHECK</button></li>
-              <li><button onClick={() => setShowSpoiler(true)} className="hover:text-yellow-500 transition-colors">LEAKS</button></li>
-              <li><button onClick={() => setHackerMode(!hackerMode)} className="hover:text-green-500 transition-colors">{hackerMode ? 'EXIT MATRIX' : 'ENTER MATRIX'}</button></li>
-            </ul>
-          </div>
-          <div className="space-y-6 md:space-y-8">
-            <h4 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-white">Legal</h4>
-            <ul className="space-y-4 md:space-y-5 text-[9px] md:text-[10px] font-black text-zinc-500 uppercase italic tracking-widest">
-              <li><button onClick={() => setViewMode('legal')} className="hover:text-white transition-colors">PRIVACY</button></li>
-              <li><button onClick={() => setViewMode('legal')} className="hover:text-white transition-colors">TERMS</button></li>
-              <li><a href="https://bgremoverai.online" target="_blank" className="hover:text-white underline underline-offset-4">BG REMOVER</a></li>
-            </ul>
-          </div>
-          <div className="space-y-6 md:space-y-8 flex flex-col items-center md:items-end">
-             <div className="flex items-center gap-3 bg-zinc-900/50 px-5 md:px-6 py-2 md:py-3 rounded-xl border border-zinc-800">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-[9px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest">SYSTEM ONLINE</span>
-             </div>
-             <p className={`text-[8px] md:text-[10px] font-black tracking-[0.4em] md:tracking-[0.6em] md:pt-10 ${hackerMode ? 'text-green-900' : 'text-zinc-800'}`}>CINEWISE 2026 // NO LOGIN REQUIRED</p>
-          </div>
-        </div>
-      </footer>
+        </header>
 
-      {showPrank && <GhostFacePrank onClose={() => setShowPrank(false)} />}
-      {showVibe && <VibeMatcher onClose={() => setShowVibe(false)} />}
-      {showSpoiler && <SpoilerRoulette onClose={() => setShowSpoiler(false)} />}
-      <BlindPickRoulette movies={movies} isOpen={showBlindRoulette} onClose={(m) => { setShowBlindRoulette(false); if (m) setSelectedMovie(m); }} />
-      <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
-      <script type="text/javascript" src="https://s.skimresources.com/js/298886X178650.js"></script>
-    </div>
+        <Routes>
+          {/* --- HOME ROUTE --- */}
+          <Route path="/" element={
+            <>
+              {viewMode === 'legal' ? (
+                <div className="min-h-screen pt-40 px-6 max-w-4xl mx-auto space-y-12">
+                    <h2 className="text-4xl md:text-5xl font-black italic uppercase text-red-600">Legal Center</h2>
+                    <div className="prose prose-invert max-w-none text-zinc-400 font-bold leading-relaxed space-y-8 uppercase tracking-widest text-[9px] md:text-xs">
+                      <section className="space-y-4">
+                        <h3 className="text-white text-xl border-l-4 border-red-600 pl-4 italic">Privacy</h3>
+                        <p>CineWise operates on a zero-tracking model. We do not store, log, or share your data. All movie metadata is provided via the official TMDB API for educational discovery purposes.</p>
+                      </section>
+                      <section className="space-y-4">
+                        <h3 className="text-white text-xl border-l-4 border-red-600 pl-4 italic">Terms</h3>
+                        <p>By using this platform, you acknowledge it is a directory for information only. We do not host video content. All trademarks belong to their respective owners.</p>
+                      </section>
+                    </div>
+                    <button onClick={() => setViewMode('home')} className="bg-white text-black font-black px-10 py-4 rounded-xl uppercase text-[9px] tracking-widest shadow-2xl">Back Home</button>
+                </div>
+              ) : (
+                <>
+                  {!searchQuery && viewMode === 'home' && movies[0] && (
+                    <section className="relative h-[55vh] md:h-screen w-full flex items-center px-4 md:px-24 overflow-hidden pt-20 md:pt-0">
+                      <img src={getImageUrl(movies[0].backdrop_path, 'original')} className="absolute inset-0 w-full h-full object-cover opacity-20 md:opacity-30" alt="Feature" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent"></div>
+                      <div className="relative max-w-6xl space-y-5 md:space-y-8 mt-8 md:mt-20">
+                        <span className="inline-block bg-red-600 text-[8px] md:text-[11px] font-black px-4 md:px-6 py-1.5 md:py-2 rounded-full tracking-[0.3em] uppercase shadow-2xl">Trending</span>
+                        <h2 className={`text-2xl md:text-8xl font-black italic uppercase tracking-tighter leading-tight md:leading-none drop-shadow-2xl ${hackerMode ? 'text-green-500' : 'text-white'}`}>{movies[0].title}</h2>
+                        <div className="flex gap-3 md:gap-4">
+                          <button onClick={() => setSelectedMovie(movies[0])} className="bg-white text-black font-black px-6 md:px-16 py-3 md:py-6 rounded-xl md:rounded-2xl hover:bg-red-600 hover:text-white transition-all text-[9px] md:text-xs uppercase tracking-widest shadow-2xl transform hover:scale-105 active:scale-95">Details</button>
+                          <button onClick={() => setHackerMode(!hackerMode)} className="bg-transparent border-2 border-white text-white font-black px-6 md:px-16 py-3 md:py-6 rounded-xl md:rounded-2xl hover:bg-white hover:text-black transition-all text-[9px] md:text-xs uppercase tracking-widest shadow-2xl transform hover:scale-105 active:scale-95">{hackerMode ? 'Matrix' : 'Enter'}</button>
+                        </div>
+                      </div>
+                    </section>
+                  )}
+
+                  {fetchError && (
+                     <div className="px-6 md:px-20 pt-32 text-center">
+                        <div className="bg-red-600/10 border border-red-600/20 p-8 rounded-3xl inline-block max-w-xl">
+                           <p className="text-red-500 font-black uppercase text-xs tracking-widest mb-4">{fetchError}</p>
+                           <button onClick={() => fetchData(1)} className="bg-red-600 text-white px-8 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest">Retry Connection</button>
+                        </div>
+                     </div>
+                  )}
+
+                  <main className="px-4 md:px-20 py-16 md:py-40 min-h-screen relative z-10">
+                    <h2 className="text-[9px] md:text-[13px] font-black uppercase tracking-[0.4em] md:tracking-[0.5em] text-zinc-800 mb-8 md:mb-16 flex items-center gap-4 md:gap-8">
+                      {viewMode === 'home' ? 'Trending Movies' : viewMode === 'upcoming' ? 'Coming Soon' : 'Movie News'} 
+                      <span className="h-px flex-1 bg-zinc-900/50"></span>
+                    </h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-12">
+                      {movies.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase())).map(m => (
+                          <div key={m.id} onClick={() => setSelectedMovie(m)} className="group cursor-pointer">
+                            <div className={`aspect-[2/3] overflow-hidden rounded-xl md:rounded-[2.5rem] border bg-zinc-900 relative shadow-xl transition-all duration-700 ${hackerMode ? 'border-green-900' : 'border-zinc-800 group-hover:border-red-600'}`}>
+                              <img src={getImageUrl(m.poster_path)} className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-[1500ms] opacity-90 group-hover:opacity-40" alt={m.title} loading="lazy" />
+                              <div className="absolute inset-0 flex flex-col justify-end p-3 md:p-6 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0 text-white">
+                                <p className="text-[10px] md:text-lg font-black uppercase italic mb-1 md:mb-2 truncate leading-tight">{m.title}</p>
+                                <p className="text-[7px] md:text-[8px] text-red-500 font-black tracking-widest uppercase">{Math.round(m.vote_average * 10)}% VIBE</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                    {!searchQuery && movies.length > 0 && (
+                      <div className="flex justify-center mt-16 md:mt-24">
+                        <button onClick={() => fetchData(page + 1)} className="bg-zinc-900 hover:bg-white hover:text-black border border-zinc-800 text-white font-black px-10 md:px-20 py-4 md:py-6 rounded-xl md:rounded-[2rem] transition-all text-[8px] md:text-[10px] tracking-[0.4em] md:tracking-[0.5em] uppercase shadow-2xl transform hover:scale-105 active:scale-95">Load More</button>
+                      </div>
+                    )}
+                  </main>
+                </>
+              )}
+            </>
+          } />
+
+          {/* --- TOOLS ROUTES --- */}
+          <Route path="/poster-ai" element={<PosterCameo movies={movies} />} />
+          <Route path="/scene-matcher" element={<SceneMatcher />} />
+        </Routes>
+
+        <footer className="py-16 md:py-32 bg-zinc-950 border-t border-zinc-900 relative z-10">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12 md:gap-20 text-center md:text-left">
+            <div className="space-y-6 md:space-y-10">
+              <h3 className="text-3xl md:text-4xl font-black italic tracking-tighter text-red-600">CINEWISE</h3>
+              <p className="text-[9px] md:text-xs font-bold text-zinc-600 leading-loose uppercase italic tracking-wider">Your decentralized movie search engine. No logins. No trackers. Just Cinema 2026.</p>
+            </div>
+            <div className="space-y-6 md:space-y-8">
+              <h4 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-white">Interactive</h4>
+              <ul className="space-y-4 md:space-y-5 text-[9px] md:text-[10px] font-black text-zinc-500 uppercase italic tracking-widest">
+                <li><button onClick={() => setShowVibe(true)} className="hover:text-red-600 transition-colors">VIBE CHECK</button></li>
+                <li><button onClick={() => setShowSpoiler(true)} className="hover:text-yellow-500 transition-colors">LEAKS</button></li>
+                <li><button onClick={() => setHackerMode(!hackerMode)} className="hover:text-green-500 transition-colors">{hackerMode ? 'EXIT MATRIX' : 'ENTER MATRIX'}</button></li>
+              </ul>
+            </div>
+            <div className="space-y-6 md:space-y-8">
+              <h4 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.3em] text-white">Legal</h4>
+              <ul className="space-y-4 md:space-y-5 text-[9px] md:text-[10px] font-black text-zinc-500 uppercase italic tracking-widest">
+                <li><button onClick={() => setViewMode('legal')} className="hover:text-white transition-colors">PRIVACY</button></li>
+                <li><button onClick={() => setViewMode('legal')} className="hover:text-white transition-colors">TERMS</button></li>
+                <li><a href="https://bgremoverai.online" target="_blank" className="hover:text-white underline underline-offset-4">BG REMOVER</a></li>
+              </ul>
+            </div>
+            <div className="space-y-6 md:space-y-8 flex flex-col items-center md:items-end">
+               <div className="flex items-center gap-3 bg-zinc-900/50 px-5 md:px-6 py-2 md:py-3 rounded-xl border border-zinc-800">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-[9px] md:text-[10px] font-black text-zinc-400 uppercase tracking-widest">SYSTEM ONLINE</span>
+               </div>
+               <p className={`text-[8px] md:text-[10px] font-black tracking-[0.4em] md:tracking-[0.6em] md:pt-10 ${hackerMode ? 'text-green-900' : 'text-zinc-800'}`}>CINEWISE 2026 // NO LOGIN REQUIRED</p>
+            </div>
+          </div>
+        </footer>
+
+        {showPrank && <GhostFacePrank onClose={() => setShowPrank(false)} />}
+        {showVibe && <VibeMatcher onClose={() => setShowVibe(false)} />}
+        {showSpoiler && <SpoilerRoulette onClose={() => setShowSpoiler(false)} />}
+        <BlindPickRoulette movies={movies} isOpen={showBlindRoulette} onClose={(m) => { setShowBlindRoulette(false); if (m) setSelectedMovie(m); }} />
+        <MovieDetailModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />
+      </div>
+    </Router>
   );
 };
 
