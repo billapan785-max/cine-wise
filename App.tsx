@@ -358,7 +358,7 @@ const MovieDetailModal: React.FC<{ movie: Movie | null; onClose: () => void }> =
   useEffect(() => {
     if (movie) {
       const originalTitle = document.title;
-      updateMetaTags(`${movie.title} - CineWise`, movie.overview, getImageUrl(movie.poster_path), `https://cinewise.ai/movie/${movie.id}`);
+      updateMetaTags(`${movie.title} - Best AI Movie Poster Generator`, movie.overview, getImageUrl(movie.poster_path), `https://cinewise.ai/movie/${movie.id}`);
       
       setLoadingCritique(true);
       getMovieCritique(movie.title, movie.overview).then(text => { setCritique(text); setLoadingCritique(false); });
