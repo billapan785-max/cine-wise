@@ -152,7 +152,7 @@ const SceneMatcher: React.FC = () => {
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         <div className="space-y-8">
           <div className="space-y-4">
-            <h2 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter text-white">Scene Matcher</h2>
+            <h2 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter text-white">AI Movie Scene Finder & Matcher</h2>
             <p className="text-zinc-500 font-bold uppercase tracking-widest text-[10px] md:text-xs italic">Find your cinematic doppelgänger. Who do you look like in the multiverse of cinema?</p>
           </div>
 
@@ -164,7 +164,7 @@ const SceneMatcher: React.FC = () => {
             
             <div className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-3xl">
                <p className="text-zinc-400 font-bold uppercase tracking-widest text-[9px] md:text-[10px] leading-relaxed">
-                 Want a better match? <a href="https://bgremoverai.online" target="_blank" className="text-white underline hover:text-red-600 transition-colors">Clean your photo at bgremoverai.online for free with no login required!</a>
+                 Want a better match? <a href="https://bgremoverai.online" target="_blank" className="text-white underline hover:text-red-600 transition-colors">Remove background for free at bgremoverai.online (No Login Required) for free with no login required!</a>
                </p>
             </div>
           </div>
@@ -298,10 +298,10 @@ const PosterCameo: React.FC<{ movies: Movie[] }> = ({ movies }) => {
     <section className="py-24 px-4 md:px-20 bg-zinc-900/30 border-y border-zinc-900 relative z-10 min-h-screen pt-32">
       <div className="max-w-7xl mx-auto space-y-8 md:space-y-12">
         <div className="text-center md:text-left space-y-4">
-          <h2 className="text-3xl md:text-6xl font-black italic uppercase tracking-tighter text-red-600">Poster Cameo</h2>
+          <h2 className="text-3xl md:text-6xl font-black italic uppercase tracking-tighter text-red-600">Free AI Movie Poster Generator</h2>
           <p className="text-zinc-500 font-bold uppercase tracking-widest text-[9px] md:text-xs italic max-w-2xl leading-relaxed">
             Star in your own film. For best results, 
-            <a href="https://bgremoverai.online" target="_blank" className="text-white underline mx-1 hover:text-red-500 transition-colors">remove your background for free at bgremoverai.online</a> 
+            <a href="https://bgremoverai.online" target="_blank" className="text-white underline mx-1 hover:text-red-500 transition-colors">use bgremoverai.online to remove background instantly for free</a> 
             (No Login Required).
           </p>
         </div>
@@ -635,8 +635,8 @@ const App: React.FC = () => {
                   <Link key={m} to="/" onClick={() => {setViewMode(m as any); window.scrollTo(0,0);}} className={`px-4 md:px-5 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === m ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-500 hover:text-white'}`}>{m === 'home' ? 'Home' : m === 'upcoming' ? 'Soon' : 'News'}</Link>
                 ))}
                 <div className="w-px h-4 bg-zinc-800 self-center mx-1"></div>
-                <Link to="/poster-ai" className="px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white">Poster AI</Link>
-                <Link to="/scene-matcher" className="px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white">Scene Matcher</Link>
+                <Link to="/ai-movie-poster-generator" className="px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white">Poster AI</Link>
+                <Link to="/find-movie-by-scene-ai" className="px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white">Scene Finder AI</Link>
                 <button onClick={() => setShowBlindRoulette(true)} className="px-4 py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-all">🎲 Roulette</button>
               </div>
             </nav>
@@ -725,8 +725,8 @@ const App: React.FC = () => {
           } />
 
           {/* --- TOOLS ROUTES --- */}
-          <Route path="/poster-ai" element={<PosterCameo movies={movies} />} />
-          <Route path="/scene-matcher" element={<SceneMatcher />} />
+          <Route path="/ai-movie-poster-generator" element={<PosterCameo movies={movies} />} />
+          <Route path="/find-movie-by-scene-ai" element={<SceneMatcher />} />
         </Routes>
 
         <footer className="py-16 md:py-32 bg-zinc-950 border-t border-zinc-900 relative z-10">
